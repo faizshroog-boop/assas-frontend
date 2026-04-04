@@ -1,0 +1,286 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Cairo", sans-serif;
+}
+
+/* =========================================================
+   Home Page Background
+   خلفية الصفحة الرئيسية
+   - صورة خريطة المدينة
+   - طبقة بيضاء شفافة فوقها لتخفيف وضوح الصورة
+========================================================= */
+.home-page {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.75)),
+    url("../img/map_BG.jpg");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  height: 100vh; /* جعل الصفحة بارتفاع الشاشة */
+  overflow: hidden; /* منع ظهور scroll */
+
+  color: #111;
+  position: relative;
+}
+
+/* =========================================================
+   Top Bar (Header)
+   الشريط العلوي الذي يحتوي على:
+   - شعار عسّاس
+   - زر تغيير اللغة
+   - شعار رؤية 2030
+========================================================= */
+.home-page .top-bar {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  right: 0;
+
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* =========================================================
+   Assas Logo
+   شعار عسّاس في أعلى يمين الصفحة
+========================================================= */
+.home-page .top-bar .right {
+  position: absolute;
+  right: 40px;
+}
+
+.home-page .assas-logo {
+  height: 80px;
+}
+
+/* =========================================================
+   Vision 2030 + Language
+   الجزء الأيسر من الشريط العلوي
+   يحتوي على:
+   - زر تغيير اللغة
+   - شعار رؤية 2030
+========================================================= */
+.home-page .top-bar .left {
+  position: absolute;
+  left: 40px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================================================
+   Vision Logo
+   التحكم بحجم شعار رؤية 2030 وموقعه
+========================================================= */
+.home-page .vision-logo {
+  height: 170px;
+  margin-left: -70px;
+}
+
+/* =========================================================
+   Language Button
+   زر تغيير اللغة (English)
+========================================================= */
+.home-page .lang {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  margin-left: -100px;
+
+  color: #0c4f38; /* اللون الأخضر الأساسي */
+  cursor: pointer;
+}
+
+/* أيقونة الكرة الأرضية */
+.home-page .lang svg {
+  width: 16px;
+  height: 16px;
+
+  stroke: #0c4f38;
+  fill: none;
+  stroke-width: 2;
+}
+
+/* النص داخل زر اللغة */
+.home-page .lang-text {
+  line-height: 1;
+}
+
+/* =========================================================
+   Hero Section
+   القسم الرئيسي في الصفحة
+   يحتوي على:
+   - العنوان الرئيسي
+   - الوصف
+   - الكروت
+========================================================= */
+.home-page .hero {
+  text-align: right;
+
+  padding-top: 220px; /* المسافة بين الهيدر والمحتوى */
+
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* =========================================================
+   Main Title
+   العنوان الرئيسي للصفحة
+========================================================= */
+.home-page .hero h1 {
+  font-size: 40px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+/* =========================================================
+   Description Text
+   النص التوضيحي أسفل العنوان
+========================================================= */
+.home-page .hero p {
+  font-size: 18px;
+  max-width: 600px;
+  margin: 0;
+  line-height: 1.8;
+}
+
+/* =========================================================
+   Cards Container
+   الحاوية التي تحتوي الكروت (الموظف والمهندس)
+========================================================= */
+.home-page .cards {
+  display: flex;
+  justify-content: center;
+
+  gap: 30px; /* المسافة بين الكروت */
+  margin-top: 70px; /* المسافة بين النص والكروت */
+}
+
+/* =========================================================
+   Card Component
+   التصميم الأساسي للكرت
+========================================================= */
+.home-page .card {
+  width: 470px;
+  height: 190px;
+
+  border-radius: 25px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+
+  transition: 0.3s;
+
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  align-items: center;
+
+  padding: 20px 30px;
+
+  position: relative;
+}
+
+/* =========================================================
+   Card Content
+   النصوص داخل الكرت
+========================================================= */
+.home-page .card-content {
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: flex-start;
+
+  flex: 1;
+  margin-right: 15px;
+}
+
+/* عنوان الكرت */
+.home-page .card-content h3 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+/* وصف الكرت */
+.home-page .card-content p {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+/* شعار عسّاس داخل الكرت */
+.home-page .card-logo {
+  height: 60px;
+  width: auto;
+}
+
+/* =========================================================
+   Engineer Card
+   تصميم كرت المهندس
+========================================================= */
+.home-page .engineer {
+  background: #ffffff;
+  border: 2.5px solid #0c4f38;
+}
+
+.home-page .engineer .card-arrow {
+  color: #0c4f38;
+  border-color: #0c4f38;
+  background: rgba(12, 79, 56, 0.05);
+}
+
+.home-page .engineer .card-arrow:hover {
+  background: rgba(8, 138, 95, 0.29);
+}
+
+/* =========================================================
+   Employee Card
+   تصميم كرت الموظف
+========================================================= */
+.home-page .employee {
+  background: #0c5742;
+  color: white;
+  border: 2.5px solid #0a4735;
+}
+
+.home-page .employee .card-arrow {
+  color: #fff;
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.home-page .employee .card-arrow:hover {
+  background: rgba(232, 232, 232, 0.411);
+}
+
+.card-arrow {
+  position: absolute;
+
+  bottom: 20px;
+  left: 20px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 30px;
+
+  text-decoration: none;
+  font-size: 18px;
+
+  transition: 0.5s;
+}

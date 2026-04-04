@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Engineer Profile</title>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <!-- Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --green: #0c5742;
+        --bg: #f7f9f7;
+        --card: #ffffff;
+        --text: #222;
+        --border: #0c5742;
+      }
+
+      body.dark {
+        --bg: #0f1f1a;
+        --card: #162b24;
+        --text: #f1f1f1;
+        --border: #2fa37a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Cairo", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar */
+      aside {
+        width: 240px;
+        background: var(--green);
+        color: #fff;
+        padding: 25px 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      body.dark aside {
+        background: #0a4032;
+      }
+
+      aside img {
+        width: 150px;
+        margin-bottom: 40px;
+      }
+
+      aside ul {
+        list-style: none;
+        padding: 0;
+        width: 100%;
+      }
+
+      aside ul li {
+        padding: 12px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        transition: 0.3s;
+      }
+
+      aside ul li:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      aside ul li.active {
+        background: rgba(255, 255, 255, 0.25);
+        font-weight: 600;
+      }
+
+      aside ul li a {
+        color: inherit;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+      }
+
+      /* Logout */
+      .logout-btn {
+        margin-top: auto;
+        width: 100%;
+        padding: 12px 15px;
+        border: none;
+        border-radius: 8px;
+        background: #d9534f;
+        color: #fff;
+        cursor: pointer;
+        font-family: "Cairo", sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        justify-content: flex-start;
+        transition: 0.3s;
+      }
+      .logout-btn:hover {
+        background: #c9302c;
+      }
+
+      /* Main */
+      main {
+        flex: 1;
+        padding: 25px;
+      }
+
+      /* Profile Header */
+      .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 15px;
+      }
+
+      .profile-text {
+        flex: 1;
+      }
+
+      .profile-text h2 {
+        margin: 0;
+      }
+
+      .profile-text p {
+        margin: 4px 0;
+        color: gray;
+      }
+
+      .profile-img {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid var(--border);
+        object-fit: cover;
+      }
+
+      .back-icon {
+        color: var(--green);
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      .back-icon:hover {
+        opacity: 0.7;
+        transform: translateX(5px);
+      }
+
+      /* Contact */
+      .contact-row {
+        display: flex;
+        justify-content: space-between;
+        margin: 15px 0 25px;
+        color: var(--green);
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      /* Section title */
+      .section-title {
+        margin: 25px 0 10px;
+        color: var(--green);
+        font-weight: 700;
+      }
+
+      /* Card */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      }
+
+      body.dark .card {
+        box-shadow: none;
+      }
+
+      /* Grid */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+      }
+
+      .grid div {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .grid strong {
+        font-size: 14px;
+        opacity: 0.8;
+      }
+
+      /* Status */
+      .status-active {
+        color: #2fa37a;
+        font-weight: bold;
+      }
+
+      /* Settings */
+      .settings {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .switch {
+        position: relative;
+        width: 50px;
+        height: 25px;
+      }
+
+      .switch input {
+        display: none;
+      }
+
+      .slider {
+        position: absolute;
+        inset: 0;
+        background: #ccc;
+        border-radius: 25px;
+        cursor: pointer;
+      }
+
+      .slider::before {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: #fff;
+        border-radius: 50%;
+        top: 2.5px;
+        right: 3px;
+        transition: 0.3s;
+      }
+
+      input:checked + .slider {
+        background: var(--green);
+      }
+
+      input:checked + .slider::before {
+        transform: translateX(-24px);
+      }
+
+      /* Responsive */
+      @media (max-width: 900px) {
+        aside {
+          display: none;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .profile-header {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <aside>
+        <img src="../statics/img/Assas_green_logo.png" alt="logo" />
+
+        <ul>
+          <li>
+            <a href="dashboard.html">
+              <i class="fa-solid fa-chart-line"></i> لوحة التحكم
+            </a>
+          </li>
+
+          <li>
+            <a href="map.html">
+              <i class="fa-solid fa-map-location-dot"></i> الخريطة
+            </a>
+          </li>
+
+          <li>
+            <a href="projects.html">
+              <i class="fa-solid fa-upload"></i> إدراج صورة
+            </a>
+          </li>
+
+          <li class="active">
+            <a href="profile.html">
+              <i class="fa-solid fa-user"></i> الصفحة الشخصية
+            </a>
+          </li>
+        </ul>
+
+        <button class="logout-btn">
+          <i class="fa-solid fa-right-from-bracket"></i> تسجيل خروج
+        </button>
+      </aside>
+
+      <main>
+        <div class="profile-header">
+          <img
+            id="profile_img"
+            src="../statics/img/user.png"
+            class="profile-img"
+          />
+
+          <div class="profile-text">
+            <h2 id="name">...</h2>
+            <p id="employee_id">...</p>
+            <span id="role"></span><br />
+            <span id="role2"></span>
+          </div>
+
+          <i class="fa-solid fa-arrow-left back-icon" onclick="goBack()"></i>
+        </div>
+
+        <div class="contact-row">
+          <span
+            ><i class="fa-solid fa-phone"></i> <span id="phone"></span
+          ></span>
+          <span
+            ><i class="fa-solid fa-envelope"></i> <span id="email"></span
+          ></span>
+        </div>
+
+        <h3 class="section-title">معلومات العمل</h3>
+        <section class="card">
+          <div class="grid">
+            <div><strong>القسم</strong><span id="department"></span></div>
+
+            <div>
+              <strong>الدور الوظيفي</strong>
+              <span id="role_display"></span>
+            </div>
+
+            <div>
+              <strong>حالة الحساب</strong>
+              <span id="status" class="status-active"></span>
+            </div>
+
+            <div>
+              <strong>تاريخ الانضمام</strong>
+              <span id="joined_date"></span>
+            </div>
+          </div>
+        </section>
+
+        <h3 class="section-title">ملخص النشاط</h3>
+        <section class="card">
+          <div class="grid">
+            <div>
+              <strong>عدد البلاغات المستلمة</strong
+              ><span id="total_reports"></span>
+            </div>
+
+            <div>
+              <strong>بلاغات قيد المعالجة</strong
+              ><span id="reports_in_progress"></span>
+            </div>
+
+            <div>
+              <strong>بلاغات مكتملة</strong><span id="completed_reports"></span>
+            </div>
+
+            <div><strong>آخر نشاط</strong><span id="last_activity"></span></div>
+          </div>
+        </section>
+        <h3 class="section-title">الإعدادات</h3>
+        <section class="card">
+          <div class="settings">
+            <span>الوضع الليلي</span>
+            <label class="switch">
+              <input
+                type="checkbox"
+                onchange="document.body.classList.toggle('dark')"
+              />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script type="module">
+      import { auth } from "../js/firebase.js";
+      import {
+        onAuthStateChanged,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+      /* Check user */
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          window.location.href = "/employee-login"; // عدل حسب مسارك
+          return;
+        }
+
+        try {
+          const token = await user.getIdToken();
+
+          const response = await fetch("http://127.0.0.1:5000/profile", {
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          });
+
+          const data = await response.json();
+
+          /* Fill data */
+          document.getElementById("name").innerText = data.name || "غير متوفر";
+          document.getElementById("email").innerText = data.email || "";
+
+          document.getElementById("role").innerText = data.role || "";
+          document.getElementById("department").innerText =
+            data.department || "";
+          document.getElementById("phone").innerText = data.phone || "";
+        } catch (error) {
+          console.error("Profile error:", error);
+        }
+      });
+
+      /* Logout */
+      document.querySelector(".logout-btn").addEventListener("click", () => {
+        signOut(auth).then(() => {
+          window.location.href = "/employee-login";
+        });
+      });
+
+      /* Back */
+      window.goBack = function () {
+        window.history.back();
+      };
+    </script>
+  </body>
+</html>

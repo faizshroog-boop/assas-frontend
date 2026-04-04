@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>تسجيل دخول</title>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <!-- Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- style sheet -->
+    <link rel="stylesheet" href="../statics/css/login.css" />
+  </head>
+
+  <body class="login-page">
+    <!-- Right Side Map Background -->
+    <div class="page-bg"></div>
+
+    <!-- Top Bar Layer -->
+    <header class="top-bar">
+      <!-- Logo Assas (Top Right) -->
+      <div class="right">
+        <img
+          src="../statics/img/Assas_clear_logo.png"
+          class="assas-logo"
+          alt="شعار عسّاس"
+        />
+      </div>
+
+      <!-- Vision and Language (Top Left) -->
+      <div class="left">
+        <span class="lang">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M3 12h18"></path>
+            <path d="M12 3a15 15 0 0 1 0 18"></path>
+            <path d="M12 3a15 15 0 0 0 0 18"></path>
+          </svg>
+          <span class="lang-text">English</span>
+        </span>
+        <img
+          src="../statics/img/saudi_grey_palm.png"
+          class="vision-logo"
+          alt="رؤية السعودية 2030"
+        />
+      </div>
+    </header>
+
+    <!-- Left Side Green Panel -->
+    <div class="green-panel"></div>
+    <!-- Login Card -->
+    <main class="login-card">
+      <h2 class="login-title">
+        <span>تسجيل الدخول للمهندس</span>
+        <a href="index.html" class="back-arrow" aria-label="رجوع">
+          <i class="fa-solid fa-arrow-left"></i>
+        </a>
+      </h2>
+
+      <form onsubmit="handleLogin(event)">
+        <!-- Email Field -->
+        <div class="input-group">
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h16v12H4z"></path>
+              <path d="M4 6l8 6 8-6"></path>
+            </svg>
+          </span>
+          <input type="email" name="email" placeholder="Email" required />
+        </div>
+
+        <!-- Password Field -->
+        <div class="input-group">
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 10V7a5 5 0 0 1 10 0v3"></path>
+              <rect x="5" y="10" width="14" height="10" rx="2"></rect>
+            </svg>
+          </span>
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+        </div>
+
+        <div class="forgot">
+          <a href="#">نسيت كلمة المرور؟</a>
+        </div>
+
+        <button type="submit" class="login-btn">تسجيل دخول</button>
+      </form>
+    </main>
+
+    <script type="module" src="../statics/js/firebase.js"></script>
+    <script type="module" src="../statics/js/login.js"></script>
+  </body>
+</html>
