@@ -11,7 +11,7 @@
       } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
       /* ===================================================
-         2. Global State & Variables
+         3. Global State & Variables
       =================================================== */
       // Data layers for frontend
       let allReports = []; // All fetched reports
@@ -45,7 +45,7 @@
       const pageInfo = document.getElementById("pageInfo");
 
       /* ===================================================
-         3. Constants & Translations
+         4. Constants & Translations
       =================================================== */
       // Maps English status keys to Arabic display text
       const statusTranslation = {
@@ -62,7 +62,7 @@
       };
 
       /* ===================================================
-         4. Utility / Helper Functions
+         5. Utility / Helper Functions
       =================================================== */
       /**
        * Determines marker/dot color dynamically depending on completion and severity.
@@ -92,7 +92,7 @@
       }
 
       /* ===================================================
-         5. Map Logic
+         6. Map Logic
       =================================================== */
       /**
        * Class to generate InfoWindow-like custom popup directly rendering on map coordinates.
@@ -140,7 +140,7 @@
       }
 
       /* ===================================================
-         6. Chart Logic
+         7. Chart Logic
       =================================================== */
       /**
        * Constructor generic function for maintaining scalable usage of new datasets
@@ -216,7 +216,7 @@
       completedChart = createChart("completedChart", "#2ecc71");
 
       /* ===================================================
-         7. Firestore Realtime Listener
+         8. Firestore Realtime Listener
       =================================================== */
       onSnapshot(collection(db, "reports"), (snapshot) => {
         allReports = snapshot.docs.map((docSnap) => ({
@@ -225,9 +225,14 @@
         }));
 
         let totalReports = allReports.length;
+        let totalCost = 0;
+        let spentCost = 0;
         let counts = { high: 0, medium: 0, low: 0, completed: 0 };
 
         allReports.forEach((report) => {
+          totalCost += Number(report.estimatedCost) || 0;
+          spentCost += Number(report.spentCost) || 0;
+
           // Bucket matching conditions
           switch (report.severity) {
             case "high":
@@ -249,6 +254,14 @@
         // Generate complete map and views rendering
         renderAllReports();
 
+        const damagedRoads = totalReports - counts.completed;
+
+        // Populate Text Nodes Statistics
+        document.getElementById("totalReports").innerText = totalReports;
+        document.getElementById("totalCost").innerText = totalCost + " ريال";
+        document.getElementById("spentCost").innerText = spentCost + " ريال";
+        document.getElementById("damagedRoads").innerText = damagedRoads;
+
         // Adjust chart layers proportionally
         updateChartDataSafe(highChart, counts.high, totalReports);
         updateChartDataSafe(mediumChart, counts.medium, totalReports);
@@ -259,7 +272,7 @@
       });
 
       /* ===================================================
-         7. Rendering Functions
+         9. Rendering Functions
       =================================================== */
       /**
        * Safely wipe, and recreate the entire HTML Table contents mapping elements
@@ -278,7 +291,17 @@
 
         markersMap = {};
 
-
+        // Populate unique locations dynamically for filter based on all items
+        const uniqueLocations = [
+          ...new Set(allReports.map((r) => r.street_name).filter(Boolean)),
+        ];
+        const currentLocVal = filterLocation.value;
+        filterLocation.innerHTML =
+          '<option value="">الكل</option>' +
+          uniqueLocations
+            .map((loc) => `<option value="${loc}">${loc}</option>`)
+            .join("");
+        filterLocation.value = currentLocVal;
 
         // Ensure pagination evaluation is properly fired matching the current filter state
         console.log(
@@ -296,20 +319,6 @@
               parseFloat(report.longitude),
             );
 
-            let createdDate = null;
-            if (report.created_at && typeof report.created_at.toDate === "function") {
-              createdDate = report.created_at.toDate();
-            } else if (report.created_at_string) {
-              createdDate = new Date(report.created_at_string);
-            }
-
-            let completedDate = null;
-            if (report.completed_at && typeof report.completed_at.toDate === "function") {
-              completedDate = report.completed_at.toDate();
-            } else if (report.completed_at) {
-              completedDate = new Date(report.completed_at);
-            }
-
             // Using default marker style dynamically
             const marker = new google.maps.Marker({
               position: position,
@@ -319,61 +328,21 @@
               },
             });
 
-            // Popup HTML
+            // UI template structure for mapped items popup overlay
             const popupContent = `
-              <div style="
-                  position:relative; 
-                  width:min(90vw,320px); 
-                  max-height:80vh; 
-                  overflow-y:auto; 
-                  padding:20px; 
-                  font-family:Cairo; 
-                  text-align:right; 
-                  background:white; 
-                  border-radius:14px; 
-                  box-shadow:0 15px 35px rgba(0,0,0,0.25);
-              ">
-                <button id="closePopupBtn" style="
-                    position:absolute; 
-                    top:10px; 
-                    left:10px; 
-                    border:none; 
-                    background:#eee; 
-                    width:30px; 
-                    height:30px; 
-                    border-radius:50%; 
-                    cursor:pointer;">
+              <div style="position:relative; width: min(90vw, 320px); max-height: 80vh; overflow-y: auto; padding:20px; font-family:Cairo; text-align:right; background:white; border-radius:14px; box-shadow:0 15px 35px rgba(0,0,0,0.25);">
+                <button id="closePopupBtn" style="position:absolute; top:10px; left:10px; border:none; background:#eee; width:30px; height:30px; border-radius:50%; cursor:pointer;">
                   ✕
                 </button>
-                  <!-- 2. Report ID -->
-                <h4 style="margin:8px 0; color:#0c5742; font-size:18px">
-                 #${report.id.substring(0,5)}
-                </h4>
- <!-- 3. Image -->
-                ${report.image_url ? `<img src="${report.image_url}" style="width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:10px;" onerror="this.style.display='none'" />` : ""}
-
-                <!-- 1. Severity Color Bar -->
                 <div style="height:6px; border-radius:10px; margin-bottom:10px; background:${getColor(report)};"></div>
-
-              
-
-               
-                <!-- 7. Created At -->
-                <p style="margin:5px 0;">📅 <b>تاريخ الإنشاء:</b> ${formatDate(createdDate)}</p>
-
-                <!-- 4. Location / Street Name -->
-                <p style="margin:5px 0;">📍 <b>الموقع:</b> ${report.street_name || "-"}</p>
-
-                <!-- 5. Status -->
-                <p style="margin:5px 0;">🚦 <b>الحالة:</b> ${statusTranslation[report.status] || "-"}</p>
-
-                <!-- 6. Prediction -->
-                <p style="margin:5px 0;">🤖 <b>التنبؤ :</b> ${severityTranslation[report.prediction] || "-"}</p>
-
-                <!-- 8. Completed At -->
-                <p style="margin:5px 0;">✅ <b>تاريخ الإكتمال:</b> ${formatDate(completedDate)}</p>
-              </div>
-            `;
+                <h4 style="margin:8px 0;color:#0c5742;font-size:18px">
+                  ${report.street_name || "غير معروف"}
+                </h4>
+                <img src="${report.image_url || ""}" style="width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:10px" onerror="this.style.display='none'" />
+                <p>📅 <b>التاريخ:</b> ${report.created_at_string || "-"}</p>
+                <p>🚦 <b>الحالة:</b> ${report.status || "-"}</p>
+                <p>⚠ <b>الخطورة:</b> ${severityTranslation[report.severity] || "-"}</p>
+              </div> `;
 
             marker.addListener("click", () => {
               // Ensure we close our previous active map context before assigning another
@@ -393,13 +362,6 @@
       /**
        * Dedicated table builder resolving paginated datasets only.
        */
-      function formatDate(date) {
-        if (!date) return "-";
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1; // Months are 0-indexed
-        const day = date.getDate();
-        return `${year}-${month}-${day}`;
-      }
       function renderTablePaginated() {
         tableBody.innerHTML = "";
 
@@ -428,21 +390,6 @@
         pageData.forEach((report) => {
           const color = getColor(report);
 
-          // Convert timestamps to JS Date objects
-    let createdDate = null;
-    if (report.created_at && typeof report.created_at.toDate === "function") {
-      createdDate = report.created_at.toDate();
-    } else if (report.created_at_string) {
-      createdDate = new Date(report.created_at_string);
-    }
-
-    let completedDate = null;
-    if (report.completed_at && typeof report.completed_at.toDate === "function") {
-      completedDate = report.completed_at.toDate();
-    } else if (report.completed_at) {
-      completedDate = new Date(report.completed_at);
-    }
-
           // Render Row Data into UI - removed inline event strings (like onclick)
           tableBody.insertAdjacentHTML(
             "beforeend",
@@ -456,14 +403,10 @@
               <td class="focus-col">
                 #${report.id.substring(0, 5)}
               </td>
-              <td>${statusTranslation[report.status] || "-"}</td>
               <td>${report.street_name || "غير محدد"}</td>
-              <td>${formatDate(createdDate)}</td>
-              <td>${formatDate(completedDate)}</td>
-              <td>
-                <span class="status-dot ${color}"></span>
-                ${severityTranslation[report.severity] || "-"}
-              </td>
+              <td>${report.created_at_string || "-"}</td>
+              <td>${statusTranslation[report.status] || "-"}</td>
+              <td><span class="status-dot ${color}"></span></td>
             </tr> `,
           );
         });
@@ -476,7 +419,7 @@
       }
 
       /* ===================================================
-         8. Event Listeners
+         10. Event Listeners
       =================================================== */
       /**
        * Professional cross-interaction query implementation filtering lists dynamically.
@@ -484,11 +427,11 @@
        * Integrates both the global search and specific dropdown filters.
        */
       function applyFiltersAndSearch() {
-        const searchVal = searchInput.value.trim();
+        const searchVal = searchInput.value.toLowerCase().trim();
         const severityVal = filterSeverity.value;
         const locationVal = filterLocation.value;
         const statusVal = filterStatus.value;
-        const idVal = filterId.value.trim();
+        const idVal = filterId.value.toLowerCase().trim();
 
         const dateFromVal = filterDateFrom.value
           ? new Date(filterDateFrom.value)
@@ -512,28 +455,30 @@
 
           // Check Global Search
           if (searchVal !== "") {
-            const searchLower = searchVal.toLowerCase();
-            const rowIdMatch = report.id.includes(searchVal);
+            const rowIdMatch = report.id.toLowerCase().includes(searchVal);
             const rowStreetMatch =
               report.street_name &&
-              report.street_name.toLowerCase().includes(searchLower);
+              report.street_name.toLowerCase().includes(searchVal);
             if (!rowIdMatch && !rowStreetMatch) isMatch = false;
           }
 
           // Check Specific Filters
           if (severityVal && report.severity !== severityVal) isMatch = false;
           if (statusVal && report.status !== statusVal) isMatch = false;
-          if (locationVal && (!report.street_name || !report.street_name.includes(locationVal))) {
+          if (locationVal && report.street_name !== locationVal)
             isMatch = false;
-          }
-          if (idVal && !report.id.includes(idVal))
+          if (idVal && !report.id.toLowerCase().includes(idVal))
             isMatch = false;
 
           // Check Date Range Filter
-          if (report.created_at && typeof report.created_at.toDate === "function") {
-            const reportDate = report.created_at.toDate();
-            if (dateFromVal && reportDate < dateFromVal) isMatch = false;
-            if (dateToVal && reportDate > dateToVal) isMatch = false;
+          if (report.created_at_string) {
+            // Assume format "YYYY-MM-DD" or parseable string
+            const reportDate = new Date(report.created_at_string);
+            if (!isNaN(reportDate.getTime())) {
+              reportDate.setHours(12, 0, 0, 0); // Normalize to midday to prevent timezone shifting issues
+              if (dateFromVal && reportDate < dateFromVal) isMatch = false;
+              if (dateToVal && reportDate > dateToVal) isMatch = false;
+            }
           }
 
           // Visual matching: If item passes filters, push its data object to the array pool for pagination
@@ -622,7 +567,7 @@
       });
 
       /* ===================================================
-         9. Public Window Functions
+         11. Public Window Functions
       =================================================== */
       /**
        * Centers the map on the selected marker and opens its popup.

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>لوحة الموظف</title>
+    <title>المشاريع</title>
 
     <!-- Font Awesome -->
     <link
@@ -26,7 +26,7 @@
       <aside>
         <img src="../statics/img/Assas_green_logo.png" alt="logo" />
         <ul>
-          <li class="active">
+          <li>
             <a href="emp_dashboard.html">
               <i class="fa-solid fa-chart-line"></i> لوحة التحكم
             </a>
@@ -36,7 +36,7 @@
               <i class="fa-solid fa-map-location-dot"></i> رفع بلاغ
             </a>
           </li>
-          <li>
+          <li class="active">
             <a href="projects.html">
               <i class="fa-solid fa-folder"></i> المشاريع
             </a>
@@ -56,7 +56,7 @@
       <!-- Main Content -->
       <main>
         <div class="topbar">
-          <h2>لوحة الموظف</h2>
+          <h2>المشاريع</h2>
           <div class="search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input
@@ -98,9 +98,6 @@
           </div>
         </div>
 
-        <!-- Map -->
-        <div id="map"></div>
-
         <!-- Filters Section -->
         <div class="filter-section">
           <div class="filter-group">
@@ -116,27 +113,8 @@
           <div class="filter-group">
             <select id="filterLocation">
               <option value="" disabled selected>الموقع</option>
-              <option value="الرياض">الرياض</option>
-              <option value="جدة">جدة</option>
-              <option value="الدمام">الدمام</option>
-              <option value="الخبر">الخبر</option>
-              <option value="مكة">مكة</option>
-              <option value="المدينة المنورة">المدينة المنورة</option>
-              <option value="الجبيل">الجبيل</option>
-              <option value="الظهران">الظهران</option>
-              <option value="بريدة">بريدة</option>
-              <option value="الرس">الرس</option>
-              <option value="عنيزة">عنيزة</option>
-              <option value="تبوك">تبوك</option>
-              <option value="حائل">حائل</option>
-              <option value="عرعر">عرعر</option>
-              <option value="جازان">جازان</option>
-              <option value="نجران">نجران</option>
-              <option value="الباحة">الباحة</option>
-              <option value="القنفذة">القنفذة</option>
-              <option value="سكاكا">سكاكا</option>
-              <option value="الأفلاج">الأفلاج</option>
-              <option value="وادي الدواسر">وادي الدواسر</option>
+              <option value="">الكل</option>
+              <!-- باقي المواقع يتم ملؤها ديناميكيًا -->
             </select>
           </div>
 
@@ -175,12 +153,11 @@
           <thead>
             <tr>
               <th>حذف</th>
-              <th>رقم البلاغ</th>
-              <th>الحالة</th>
+              <th>رقم</th>
               <th>الموقع</th>
-              <th>تاريخ الإنشاء</th>
-              <th>تاريخ الإكتمال</th>
-              <th>الخطورة</th>
+              <th>التاريخ</th>
+              <th>الحالة</th>
+              <th>مستوى الخطورة</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>

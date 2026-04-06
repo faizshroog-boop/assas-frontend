@@ -77,9 +77,19 @@ function updateFileName(name) {
 // ------------------- Submit Handler -------------------
 submitBtn.addEventListener("click", async () => {
   const file = fileInput.files[0];
+
   const mapLocation = getSelectedLocation();
 
-  const streetName = streetInput.value.trim();
+const manualStreet = streetInput.value.trim();
+
+// ✅ Always build clean street_name
+const streetName = manualStreet || [
+  mapLocation?.street,
+  mapLocation?.neighborhood,
+  mapLocation?.city
+]
+  .filter(Boolean)
+  .join("، ");
   const latValue = latInput.value;
   const lngValue = lngInput.value;
 
