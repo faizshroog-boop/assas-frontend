@@ -20,12 +20,6 @@ function initMap() {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
 
-    selectedLocation = { lat, lng };
-
-    // Fill inputs automatically
-    document.getElementById("latitude").value = lat;
-    document.getElementById("longitude").value = lng;
-
     // Move marker
     if (marker) marker.setMap(null);
 
@@ -34,11 +28,57 @@ function initMap() {
       map: map,
     });
 
-    // Get street name automatically
+    // Fill inputs
+    document.getElementById("latitude").value = lat;
+    document.getElementById("longitude").value = lng;
+
+    // ✅ Get clean address parts
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
       if (status === "OK" && results[0]) {
-        document.getElementById("streetName").value =
-          results[0].formatted_address;
+        const components = results[0].address_components;
+
+        let street = "";
+        let neighborhood = "";
+        let city = "";
+
+        components.forEach((comp) => {
+          if (comp.types.includes("route")) {
+            street = comp.long_name;
+          }
+          if (
+            comp.types.includes("sublocality") ||
+            comp.types.includes("neighborhood")
+          ) {
+            neighborhood = comp.long_name;
+          }
+          if (comp.types.includes("locality")) {
+            city = comp.long_name;
+          }
+        });
+
+        // fallback for city
+        if (!city) {
+          const admin = components.find((c) =>
+            c.types.includes("administrative_area_level_1")
+          );
+          city = admin?.long_name || "";
+        }
+
+        // ✅ Save structured location
+        selectedLocation = {
+          lat,
+          lng,
+          street,
+          neighborhood,
+          city,
+        };
+
+        // ✅ Show clean value in input
+        const clean = [street, neighborhood, city]
+          .filter(Boolean)
+          .join("، ");
+
+        document.getElementById("streetName").value = clean;
       }
     });
 
@@ -46,10 +86,8 @@ function initMap() {
   });
 }
 
-// ✅ Expose initMap globally for Google Maps callback
 window.initMap = initMap;
 
-// ✅ Export location getter for your modules
 export function getSelectedLocation() {
   return selectedLocation;
 }

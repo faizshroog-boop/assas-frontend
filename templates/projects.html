@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>لوحة الموظف</title>
+    <title>المشاريع</title>
 
     <!-- Font Awesome -->
     <link
@@ -17,7 +17,7 @@
       rel="stylesheet"
     />
     <!-- style sheet -->
-    <link rel="stylesheet" href="../statics/css/dashboard.css" />
+    <link rel="stylesheet" href="../statics/css/projects.css" />
   </head>
 
   <body>
@@ -26,12 +26,12 @@
       <aside>
         <img src="../statics/img/Assas_green_logo.png" alt="logo" />
         <ul>
-          <li class="active">
+          <li>
             <a href="emp_dashboard.html">
               <i class="fa-solid fa-chart-line"></i> لوحة التحكم
             </a>
           </li>
-          <li>
+          <li class="active">
             <a href="projects.html">
               <i class="fa-solid fa-folder"></i> المشاريع
             </a>
@@ -56,7 +56,7 @@
       <!-- Main Content -->
       <main>
         <div class="topbar">
-          <h2>لوحة الموظف</h2>
+          <h2>المشاريع</h2>
           <div class="search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input
@@ -67,39 +67,7 @@
           </div>
         </div>
 
-        <!-- Charts-->
-        <div
-          class="chart-container"
-          style="
-            display: flex;
-            gap: 85px;
-            justify-content: center;
-            align-items: center;
-          "
-        >
-          <div style="text-align: center">
-            <canvas id="highChart" width="150" height="150"></canvas>
-            <div style="margin-top: 8px">عالية</div>
-          </div>
-
-          <div style="text-align: center">
-            <canvas id="mediumChart" width="150" height="150"></canvas>
-            <div style="margin-top: 8px">متوسطة</div>
-          </div>
-
-          <div style="text-align: center">
-            <canvas id="lowChart" width="150" height="150"></canvas>
-            <div style="margin-top: 8px">منخفضة</div>
-          </div>
-
-          <div style="text-align: center">
-            <canvas id="completedChart" width="150" height="150"></canvas>
-            <div style="margin-top: 8px">مكتمل</div>
-          </div>
-        </div>
-
-        <!-- Map -->
-        <div id="map"></div>
+        <div id="reportDetailsCard" class="report-details hidden"></div>
 
         <!-- Filters Section -->
         <div class="filter-section">
@@ -116,6 +84,7 @@
           <div class="filter-group">
             <select id="filterLocation">
               <option value="" disabled selected>الموقع</option>
+              <option value="">الكل</option>
               <option value="الرياض">الرياض</option>
               <option value="جدة">جدة</option>
               <option value="الدمام">الدمام</option>
@@ -174,10 +143,12 @@
         <table>
           <thead>
             <tr>
+              <th>حذف</th>
               <th>رقم البلاغ</th>
               <th>الحالة</th>
               <th>الموقع</th>
               <th>تاريخ الإنشاء</th>
+              <th>تاريخ الإستلام</th>
               <th>تاريخ الإكتمال</th>
               <th>الخطورة</th>
             </tr>
@@ -198,34 +169,7 @@
       </main>
     </div>
 
-    <!-- Google Maps Initialization -->
-    <script>
-      /* ===================================================
-         1. Public Window Functions (Pre-Init)
-      =================================================== */
-      let map;
-
-      // Ensure initMap is available globally for Google Maps API callback
-      window.initMap = function () {
-        map = new google.maps.Map(document.getElementById("map"), {
-          zoom: 11,
-          center: { lat: 24.7136, lng: 46.6753 }, // Riyadh
-        });
-      };
-    </script>
-
     <!-- Firebase + Dashboard Logic -->
-    <script type="module" src="../statics/js/dashboard.js"></script>
-
-    <!-- Google Maps -->
-    <script
-      async
-      defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-uPN8afr4qXu5JE1Iew0wR5WfK3YscwY&callback=initMap"
-    ></script>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <script type="module" src="../statics/js/projects.js"></script>
   </body>
 </html>
