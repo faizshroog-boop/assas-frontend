@@ -64,32 +64,17 @@ function fillProfileData(data) {
   document.getElementById("completed_reports").innerText = data.completed_reports ?? 0;
   document.getElementById("last_activity").innerText = data.last_activity || "لا يوجد نشاط قريب";
 
-}
-
-/* --- دالة تسجيل الخروج --- */
-const logoutUser = () => {
-    signOut(auth).then(() => {
-        // مسح بيانات الجلسة من المتصفح
-        localStorage.removeItem('user');
-        console.log("تم تسجيل الخروج بنجاح");
-        // التوجه لصفحة تسجيل الدخول
-        window.location.href = "index.html?logout=success";
-    }).catch((error) => {
-        console.error("خطأ أثناء تسجيل الخروج:", error);
-        alert("حدث خطأ أثناء محاولة تسجيل الخروج");
-    });
-};
-
-/* --- ربط الزر بالحدث (Event Listener) --- */
-// نستخدم هذه الطريقة لضمان أن الزر سيعمل حتى لو ضغطتِ على الأيقونة التي بداخله
-document.addEventListener("click", (e) => {
-    const btn = e.target.closest(".logout-btn");
-    if (btn) {
-        e.preventDefault();
-        console.log("تم الضغط على زر تسجيل الخروج");
-        logoutUser();
+  const taskLabel = document.getElementById("task_label");
+  if (taskLabel) {
+    // إذا كان المودل (الرتبة) موظف، يغير الكلمة لـ "المرفوعة"
+    if (data.role === "employee") {
+        taskLabel.innerText = "عدد البلاغات المرفوعة";
+    } else {
+        // إذا كان مهندس (أو أي رتبة ثانية) يخليها "المستلمة"
+        taskLabel.innerText = "عدد البلاغات المستلمة";
     }
-});
+  }
+}
 
 /* 4. زر الرجوع */
 window.goBack = function () {

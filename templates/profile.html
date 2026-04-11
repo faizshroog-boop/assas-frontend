@@ -22,40 +22,10 @@
   </head>
 
   <body>
+    
     <div class="container">
-      <aside>
-        <img src="../statics/img/Assas_green_logo.png" alt="logo" />
-
-        <ul>
-          <li>
-            <a href="emp_dashboard.html">
-              <i class="fa-solid fa-chart-line"></i> لوحة التحكم
-            </a>
-          </li>
-
-          <li>
-            <a href="upload.html">
-              <i class="fa-solid fa-map-location-dot"></i> رفع بلاغ
-            </a>
-          </li>
-
-          <li>
-            <a href="projects.html">
-              <i class="fa-solid fa-upload"></i> المشاريع
-            </a>
-          </li>
-
-          <li class="active">
-            <a href="profile.html">
-              <i class="fa-solid fa-user"></i> الصفحة الشخصية
-            </a>
-          </li>
-        </ul>
-
-        <button class="logout-btn">
-          <i class="fa-solid fa-right-from-bracket"></i> تسجيل خروج
-        </button>
-      </aside>
+      <div id="sidebar-container"></div>
+      
 
       <main>
         <div class="profile-header">
@@ -110,7 +80,7 @@
         <section class="card">
           <div class="grid">
             <div>
-              <strong>عدد البلاغات المستلمة</strong
+              <strong id="task_label">عدد البلاغات المستلمة</strong
               ><span id="total_reports"></span>
             </div>
 
@@ -142,5 +112,6 @@
       </main>
     </div>
     <script type="module" src="../statics/js/profile.js"></script>
+    <script type="module" src="../statics/js/loadSidebar.js"></script>
   </body>
 </html>

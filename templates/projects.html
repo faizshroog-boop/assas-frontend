@@ -23,35 +23,7 @@
   <body>
     <div class="container">
       <!-- Sidebar -->
-      <aside>
-        <img src="../statics/img/Assas_green_logo.png" alt="logo" />
-        <ul>
-          <li>
-            <a href="emp_dashboard.html">
-              <i class="fa-solid fa-chart-line"></i> لوحة التحكم
-            </a>
-          </li>
-          <li class="active">
-            <a href="projects.html">
-              <i class="fa-solid fa-folder"></i> المشاريع
-            </a>
-          </li>
-          <li>
-            <a href="upload.html">
-              <i class="fa-solid fa-map-location-dot"></i> رفع بلاغ
-            </a>
-          </li>
-          <li>
-            <a href="profile.html">
-              <i class="fa-solid fa-user"></i> الصفحة الشخصية
-            </a>
-          </li>
-        </ul>
-
-        <button class="logout-btn">
-          <i class="fa-solid fa-right-from-bracket"></i> تسجيل خروج
-        </button>
-      </aside>
+      <div id="sidebar-container"></div>
 
       <!-- Main Content -->
       <main>
@@ -171,5 +143,6 @@
 
     <!-- Firebase + Dashboard Logic -->
     <script type="module" src="../statics/js/projects.js"></script>
+    <script type="module" src="../statics/js/loadSidebar.js"></script>
   </body>
 </html>
