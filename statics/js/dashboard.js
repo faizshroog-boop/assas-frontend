@@ -330,7 +330,8 @@
                   padding:20px; 
                   font-family:Cairo; 
                   text-align:right; 
-                  background:white; 
+                  background:white;
+                  border-top:6px solid ${getColor(report)};
                   border-radius:14px; 
                   box-shadow:0 15px 35px rgba(0,0,0,0.25);
               ">
@@ -346,32 +347,30 @@
                     cursor:pointer;">
                   ✕
                 </button>
-                  <!-- 2. Report ID -->
+                 <!-- Image -->
+                ${report.image_url ? `<img src="${report.image_url}" style="width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:10px;" onerror="this.style.display='none'" />` : ""}
+
+                  <!-- Report ID -->
                 <h4 style="margin:8px 0; color:#0c5742; font-size:18px">
                  #${report.id.substring(0,5)}
                 </h4>
-               <!-- 3. Image -->
-                ${report.image_url ? `<img src="${report.image_url}" style="width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:10px;" onerror="this.style.display='none'" />` : ""}
 
-                <!-- 1. Severity Color Bar -->
-                <div style="height:6px; border-radius:10px; margin-bottom:10px; background:${getColor(report)};"></div>
-
-              
-
-               
-                <!-- 7. Created At -->
+                <!-- Severity Color Bar -->
+                <div style="height:6px; border-radius:10px; margin-bottom:10px; background:${getColor(report)};"></div>               
+                
+                <!-- Created At -->
                 <p style="margin:5px 0;">📅 <b>تاريخ الإنشاء:</b> ${formatDate(createdDate)}</p>
 
-                <!-- 4. Location / Street Name -->
+                <!-- Location / Street Name -->
                 <p style="margin:5px 0;">📍 <b>الموقع:</b> ${report.street_name || "-"}</p>
 
-                <!-- 5. Status -->
+                <!-- Status -->
                 <p style="margin:5px 0;">🚦 <b>الحالة:</b> ${statusTranslation[report.status] || "-"}</p>
 
-                <!-- 6. Prediction -->
+                <!-- Prediction -->
                 <p style="margin:5px 0;">🤖 <b>التنبؤ :</b> ${severityTranslation[report.prediction] || "-"}</p>
 
-                <!-- 8. Completed At -->
+                <!-- Completed At -->
                 <p style="margin:5px 0;">✅ <b>تاريخ الإكتمال:</b> ${formatDate(completedDate)}</p>
               </div>
             `;

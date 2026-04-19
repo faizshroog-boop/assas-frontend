@@ -11,7 +11,7 @@ let usersMap = {}; // key: user id, value: user name
 let allReports = [];      // All fetched reports
 let filteredReports = []; // Currently filtered items
 let currentPage = 1;
-const itemsPerPage = 10;
+const itemsPerPage = 7;
 
 /* ===================================================
    3. DOM Elements

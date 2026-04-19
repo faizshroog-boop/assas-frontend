@@ -50,18 +50,23 @@
           "
         >
           <div style="text-align: center">
-            <canvas id="highChart" width="150" height="150"></canvas>
-            <div style="margin-top: 8px">عالية</div>
+            <canvas id="assignedChart" width="150" height="150"></canvas>
+            <div style="margin-top: 8px">بلاغاتي</div>
           </div>
 
           <div style="text-align: center">
-            <canvas id="mediumChart" width="150" height="150"></canvas>
-            <div style="margin-top: 8px">متوسطة</div>
+            <canvas id="completedChart" width="150" height="150"></canvas>
+            <div style="margin-top: 8px">مكتملة</div>
           </div>
 
           <div style="text-align: center">
-            <canvas id="lowChart" width="150" height="150"></canvas>
-            <div style="margin-top: 8px">منخفضة</div>
+            <canvas id="inProgressChart" width="150" height="150"></canvas>
+            <div style="margin-top: 8px">قيد التنفيذ</div>
+          </div>
+
+          <div style="text-align: center">
+            <canvas id="totalChart" width="150" height="150"></canvas>
+            <div style="margin-top: 8px">كل البلاغات</div>
           </div>
         </div>
 
@@ -127,9 +132,9 @@
         <table>
           <thead>
             <tr>
+              <th>إسناد</th>
               <th>رقم البلاغ</th>
               <th>تاريخ الإنشاء</th>
-              <th>الموظف</th>
               <th>الموقع</th>
               <th>الضرر</th>
               <th>الخطورة</th>

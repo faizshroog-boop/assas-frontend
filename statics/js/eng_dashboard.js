@@ -1,98 +1,102 @@
+
 /* ===================================================
    1. Imports
 =================================================== */
-import { db } from "./firebase.js";
+import { db, auth } from "./firebase.js";
+
 import {
   collection,
-  onSnapshot
+  onSnapshot,
+  updateDoc,
+  doc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 /* ===================================================
    2. State & Variables
 =================================================== */
+// Data State
 let allReports = [];
 let filteredReports = [];
 let markersMap = {};
 let usersMap = {};
 let activePopup = null;
 
-// Pagination state
+// Pagination State
 let currentPage = 1;
 const itemsPerPage = 10;
 
-// Chart instances
-let highChart = null, mediumChart = null, lowChart = null, completedChart = null;
+// Chart Instances
+let completedChart = null;
+let inProgressChart = null;
+let totalChart = null;
+let assignedChart = null;
 
-// DOM Elements: Main
+/* ===================================================
+   3. DOM Elements
+=================================================== */
+// Main Table & Search
 const tableBody = document.getElementById("tableBody");
 const searchInput = document.getElementById("searchInput");
 
-// DOM Elements: Filters
+// Filters
 const filterSeverity = document.getElementById("filterSeverity");
 const filterLocation = document.getElementById("filterLocation");
-const filterStatus = document.getElementById("filterStatus");
 const filterId = document.getElementById("filterId");
 const filterDateFrom = document.getElementById("filterDateFrom");
 const filterDateTo = document.getElementById("filterDateTo");
 const resetFiltersBtn = document.getElementById("resetFiltersBtn");
 
-// DOM Elements: Pagination
+// Pagination
 const prevPageBtn = document.getElementById("prevPageBtn");
 const nextPageBtn = document.getElementById("nextPageBtn");
 const pageInfo = document.getElementById("pageInfo");
 
 /* ===================================================
-   3. Constants & Translations
+   4. Constants & Translations
 =================================================== */
-const statusTranslation = {
-  completed: "مكتمل",
-  in_progress: "قيد التنفيذ",
-  pending: "غير مكتمل"
-};
-
-const severityTranslation = {
-  high: "عالية",
-  medium: "متوسطة",
-  low: "منخفضة"
+const TRANSLATIONS = {
+  status: {
+    completed: "مكتمل",
+    in_progress: "قيد التنفيذ",
+    pending: "غير مكتمل"
+  },
+  severity: {
+    high: "عالية",
+    medium: "متوسطة",
+    low: "منخفضة"
+  }
 };
 
 /* ===================================================
-   4. Helpers
+   5. Helpers & Utilities
 =================================================== */
-/**
- * Safely parse date from Firestore or string format.
- */
 function parseFirestoreDate(field) {
   if (!field) return null;
   if (typeof field.toDate === "function") return field.toDate();
-  return new Date(field);
+  const date = new Date(field);
+  return isNaN(date.getTime()) ? null : date;
 }
 
-/**
- * Formats a Date object to YYYY-MM-DD.
- */
 function formatDate(date) {
   if (!date) return "-";
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
-/**
- * Returns marker dot color code based on severity/status.
- */
 function getColor(report) {
+  if (!report) return "green";
   if (report.status === "completed") return "green";
   if (report.severity === "high") return "red";
   if (report.severity === "medium") return "orange";
   if (report.severity === "low") return "yellow";
-  return "green"; // Fallback
+  return "green"; 
 }
 
-/**
- * Debounces a function execution.
- */
 function debounce(func, delay = 300) {
   let timeout;
   return function (...args) {
@@ -101,31 +105,29 @@ function debounce(func, delay = 300) {
   };
 }
 
-/**
- * Provides safe access to the global map object.
- */
 function getMap() {
-  return typeof map !== "undefined" ? map : window.map;
+  return typeof map !== "undefined" ? map : (typeof window !== "undefined" ? window.map : null);
 }
 
 /* ===================================================
-   5. Chart Rendering & Logic
+   6. Chart Logic
 =================================================== */
 function createChart(id, color) {
   const canvas = document.getElementById(id);
-  if (!canvas) return null; // Safe check if canvas exists
-  
+  if (!canvas || typeof window.Chart === "undefined") return null;
+
   const ctx = canvas.getContext("2d");
-  // Assuming Chart comes from global scope/CDN
   return new window.Chart(ctx, {
     type: "doughnut",
     data: {
-      datasets: [{
-        data: [0, 100],
-        backgroundColor: [color, "#eeeeee"],
-        borderWidth: 0,
-        cutout: "75%",
-      }],
+      datasets: [
+        {
+          data: [0, 100],
+          backgroundColor: [color, "#eeeeee"],
+          borderWidth: 0,
+          cutout: "75%",
+        },
+      ],
     },
     options: {
       responsive: false,
@@ -133,7 +135,7 @@ function createChart(id, color) {
         legend: { display: false },
         tooltip: { enabled: false },
         datalabels: {
-          display: (ctx) => ctx.dataIndex === 0,
+          display: (context) => context.dataIndex === 0,
           color: "#000",
           font: { size: 22, weight: "bold" },
           anchor: "center",
@@ -142,68 +144,64 @@ function createChart(id, color) {
         },
       },
     },
-    plugins: [{
-      id: "centerText",
-      beforeDraw(chart) {
-        const { ctx } = chart;
-        const meta = chart.getDatasetMeta(0);
-        if (!meta.data.length) return;
+    plugins: [
+      {
+        id: "centerText",
+        beforeDraw(chart) {
+          const { ctx } = chart;
+          const meta = chart.getDatasetMeta(0);
+          if (!meta.data.length) return;
 
-        const centerX = meta.data[0].x;
-        const centerY = meta.data[0].y;
-        const value = chart.data.datasets[0].data[0] || 0;
-        const text = Math.round(value) + "%";
+          const centerX = meta.data[0].x;
+          const centerY = meta.data[0].y;
+          const value = chart.data.datasets[0].data[0] || 0;
+          const text = Math.round(value) + "%";
 
-        ctx.save();
-        ctx.font = `bold ${chart.height / 4.5}px Cairo`;
-        ctx.fillStyle = "#000";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(text, centerX, centerY);
-        ctx.restore();
+          ctx.save();
+          ctx.font = `bold ${chart.height / 4.5}px Cairo`;
+          ctx.fillStyle = "#000";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(text, centerX, centerY);
+          ctx.restore();
+        },
       },
-    }],
+    ],
   });
 }
 
 function initCharts() {
-  if (typeof window.Chart !== "undefined") {
-    highChart = createChart("highChart", "#e74c3c");
-    mediumChart = createChart("mediumChart", "#f39c12");
-    lowChart = createChart("lowChart", "#f1c40f");
-    completedChart = createChart("completedChart", "#2ecc71");
+  completedChart = createChart("completedChart", "#2ecc71");
+  inProgressChart = createChart("inProgressChart", "#f39c12");
+  totalChart = createChart("totalChart", "#9b59b6");
+  assignedChart = createChart("assignedChart", "#3498db");
+  
+}
+
+function updateChartDataSafe(chart, value, total) {
+  if (chart && chart.data?.datasets?.length) {
+    // Avoid division by zero issues or negative others
+    const others = Math.max(0, total - value);
+    if (total === 0) {
+      chart.data.datasets[0].data = [0, 1]; // Shows 0%
+    } else {
+      chart.data.datasets[0].data = [value, others];
+    }
+    
+    // Calculate percentage purely for the display plugin if needed
+    // However, our data array sets the ratio which calculates doughnut segments
+    // Wait, the plugin centerText renders the actual `data[0]` value...
+    // Let's store the percentage in data[0] so the doughnut correctly scales to 100% total
+    const percentage = total === 0 ? 0 : (value / total) * 100;
+    const remainder = 100 - percentage;
+    chart.data.datasets[0].data = [percentage, remainder];
+    chart.update();
   }
 }
 
-function updateChartDataSafe(chartInstance, count, total) {
-  if (!chartInstance || !chartInstance.data || !chartInstance.data.datasets.length) return;
-  const percent = total > 0 ? (count / total) * 100 : 0;
-  chartInstance.data.datasets[0].data = [percent, 100 - percent];
-  chartInstance.update();
-}
-
-/**
- * Dynamically re-evaluates statistics over currently visible (or main) dataset.
- */
-function updateChartsTotals(reports) {
-  let counts = { high: 0, medium: 0, low: 0, completed: 0 };
-  let total = reports.length;
-
-  reports.forEach((r) => {
-    if (r.severity === "high") counts.high++;
-    if (r.severity === "medium") counts.medium++;
-    if (r.severity === "low") counts.low++;
-    if (r.status === "completed") counts.completed++;
-  });
-
-  updateChartDataSafe(highChart, counts.high, total);
-  updateChartDataSafe(mediumChart, counts.medium, total);
-  updateChartDataSafe(lowChart, counts.low, total);
-  updateChartDataSafe(completedChart, counts.completed, total);
-}
 
 /* ===================================================
-   6. Custom Map Popup logic
+   7. Map Popup Component
 =================================================== */
 class CustomPopup extends google.maps.OverlayView {
   constructor(position, content) {
@@ -219,7 +217,7 @@ class CustomPopup extends google.maps.OverlayView {
 
   onAdd() {
     const panes = this.getPanes();
-    if (panes && panes.floatPane) {
+    if (panes?.floatPane) {
       panes.floatPane.appendChild(this.containerDiv);
     }
     const closeBtn = this.containerDiv.querySelector("#closePopupBtn");
@@ -237,8 +235,8 @@ class CustomPopup extends google.maps.OverlayView {
     if (!projection) return;
     const point = projection.fromLatLngToDivPixel(this.position);
     if (point) {
-      this.containerDiv.style.left = point.x + "px";
-      this.containerDiv.style.top = point.y + "px";
+      this.containerDiv.style.left = `${point.x}px`;
+      this.containerDiv.style.top = `${point.y}px`;
     }
   }
 
@@ -250,39 +248,59 @@ class CustomPopup extends google.maps.OverlayView {
 }
 
 function buildPopupContent(report) {
+  if (!report) return "";
+
   const createdDate = parseFirestoreDate(report.created_at || report.created_at_string);
   const completedDate = parseFirestoreDate(report.completed_at);
   const employeeName = usersMap[report.created_by] || "-";
+  const safeId = report.id ? report.id.substring(0, 5) : "-";
 
   return `
-    <div style="position:relative; width:min(90vw,320px); max-height:80vh; overflow-y:auto; padding:20px; font-family:Cairo; text-align:right; background:white; border-radius:14px; box-shadow:0 15px 35px rgba(0,0,0,0.25);">
-      <button id="closePopupBtn" style="position:absolute; top:10px; left:10px; border:none; background:#eee; width:30px; height:30px; border-radius:50%; cursor:pointer;">✕</button>
-      <h4 style="margin:8px 0; color:#0c5742; font-size:18px">#${report.id.substring(0, 5)}</h4>
+    <div style="
+    position:relative;
+    width:min(90vw,320px); 
+    max-height:80vh; 
+    overflow-y:auto; 
+    padding:20px; 
+    font-family:Cairo; 
+    text-align:right; 
+    background:white;
+    border-top:6px solid ${getColor(report)};
+    border-radius:14px; 
+    box-shadow:0 15px 35px rgba(0,0,0,0.25);">
+      <button id="closePopupBtn" style="
+      position:absolute; 
+      top:10px; 
+      left:10px; 
+      border:none; 
+      background:#eee; 
+      width:30px; 
+      height:30px; 
+      border-radius:50%; 
+      cursor:pointer;">✕</button>
+      
       ${report.image_url ? `<img src="${report.image_url}" style="width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:10px;" onerror="this.style.display='none'" />` : ""}
-      <div style="height:6px; border-radius:10px; margin-bottom:10px; background:${getColor(report)};"></div>
+      <h4 style="margin:8px 0; color:#0c5742; font-size:18px">#${safeId}</h4>
       <p style="margin:5px 0;">👤 <b>الموظف:</b> ${employeeName}</p>
       <p style="margin:5px 0;">📅 <b>تاريخ الإنشاء:</b> ${formatDate(createdDate)}</p>
       <p style="margin:5px 0;">📍 <b>الموقع:</b> ${report.street_name || "-"}</p>
-      <p style="margin:5px 0;">🚦 <b>الحالة:</b> ${statusTranslation[report.status] || "-"}</p>
-      <p style="margin:5px 0;">🤖 <b>التنبؤ :</b> ${severityTranslation[report.prediction] || "-"}</p>
+      <p style="margin:5px 0;">🚦 <b>الحالة:</b> ${TRANSLATIONS.status[report.status] || "-"}</p>
+      <p style="margin:5px 0;">🤖 <b>التنبؤ :</b> ${TRANSLATIONS.severity[report.prediction] || "-"}</p>
       <p style="margin:5px 0;">✅ <b>تاريخ الإكتمال:</b> ${formatDate(completedDate)}</p>
     </div>
   `;
 }
 
 /* ===================================================
-   7. Map Markers & UI Rendering
+   8. Map & Table Rendering
 =================================================== */
-/**
- * Safely create or update base markers from the global dataset without tearing it down.
- */
 function renderMapMarkers() {
   const gMap = getMap();
   if (typeof google === "undefined" || !gMap) return;
 
   const currentIds = new Set(allReports.map((r) => r.id));
 
-  // Purge any stale markers not in our data anymore
+  // Purge any stale markers no longer in dataset
   Object.keys(markersMap).forEach((id) => {
     if (!currentIds.has(id)) {
       markersMap[id].marker.setMap(null);
@@ -290,7 +308,7 @@ function renderMapMarkers() {
     }
   });
 
-  // Iteratively create or update context for the remaining set
+  // Create or update markers
   allReports.forEach((report) => {
     if (!report.latitude || !report.longitude) return;
 
@@ -307,10 +325,7 @@ function renderMapMarkers() {
         icon: { url: `https://maps.google.com/mapfiles/ms/icons/${color}-dot.png` },
       });
 
-      // Default hidden until evaluated by filter loop
-      marker.setMap(null); 
-      
-      const popupContent = buildPopupContent(report);
+      marker.setMap(null); // Hidden by default, evaluated later
 
       marker.addListener("click", () => {
         if (activePopup) activePopup.setMap(null);
@@ -318,13 +333,12 @@ function renderMapMarkers() {
         activePopup.setMap(gMap);
       });
 
-      markersMap[report.id] = { marker, position, popupContent };
+      markersMap[report.id] = { marker, position, popupContent: buildPopupContent(report) };
     } else {
-      // We exist! Re-evaluate popup details in case data mutated
+      // Re-evaluate popup & color in case data mutated
       markersMap[report.id].popupContent = buildPopupContent(report);
-      // We also update map marker color in case logic/status mutated
       const newColor = getColor(report);
-      markersMap[report.id].marker.setIcon({ url: `https://maps.google.com/mapfiles/ms/icons/${newColor}-dot.png`});
+      markersMap[report.id].marker.setIcon({ url: `https://maps.google.com/mapfiles/ms/icons/${newColor}-dot.png` });
     }
   });
 }
@@ -334,58 +348,55 @@ function renderTablePaginated() {
   tableBody.innerHTML = "";
 
   const totalItems = filteredReports.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
   // Clamp pagination boundaries safely
-  if (currentPage > totalPages) currentPage = totalPages;
-  if (currentPage < 1) currentPage = 1;
+  currentPage = Math.min(Math.max(1, currentPage), totalPages);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const pageData = filteredReports.slice(startIndex, endIndex);
+  const pageData = filteredReports.slice(startIndex, startIndex + itemsPerPage);
 
-  pageData.forEach((report) => {
+  const rowsHtml = pageData.map((report) => {
     const color = getColor(report);
     const createdDate = parseFirestoreDate(report.created_at || report.created_at_string);
-    const employeeName = usersMap[report.created_by] || "-";
+    const safeId = report.id ? report.id.substring(0, 5) : "-";
 
-    tableBody.insertAdjacentHTML(
-      "beforeend",
-      `
-      <tr data-id="${report.id}">
-      <td class="focus-col">
-            #${report.id.substring(0, 5)}
-      </td>
+    return `
+      <tr data-id="${report.id}" style="cursor: pointer;">
+        <td>
+          <button class="action-btn assign-btn" aria-label="إسناد التقرير">
+            <i class="fa-solid fa-user-plus"></i>
+          </button>
+        </td>
+        <td class="focus-col" style="cursor: pointer;">
+          #${safeId}
+        </td>
         <td>${formatDate(createdDate)}</td>
-        <td><span>${employeeName}</span></td>
         <td>${report.street_name || "غير محدد"}</td>
         <td>${report.damage_type || "-"}</td>
-          <td>
+        <td>
           <span class="status-dot tooltip ${color}"></span>
-          ${severityTranslation[report.severity] || "-"}
+          ${TRANSLATIONS.severity[report.severity] || "-"}
         </td>
         <td>
-        ${severityTranslation[report.prediction] || "-"}
+          ${TRANSLATIONS.severity[report.prediction] || "-"}
         </td>
-      </tr> `
-    );
-  });
+      </tr>
+    `;
+  }).join("");
 
-  // Push UI constraints visually
-  if (pageInfo) pageInfo.innerText = `صفحة ${currentPage} من ${totalPages}`;
-  if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
-  if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+  tableBody.insertAdjacentHTML("beforeend", rowsHtml);
+
 }
 
 /* ===================================================
-   8. Filters Logic
+   9. Filters Logic
 =================================================== */
 function applyFiltersAndSearchCore() {
   const searchVal = (searchInput?.value || "").trim().toLowerCase();
   const severityVal = filterSeverity?.value || "";
   const locationVal = filterLocation?.value || "";
-  const statusVal = filterStatus?.value || "";
-  const idVal = (filterId?.value || "").trim();
+  const idVal = (filterId?.value || "").trim().toLowerCase();
 
   let dateFromVal = null;
   if (filterDateFrom?.value) {
@@ -400,59 +411,66 @@ function applyFiltersAndSearchCore() {
   }
 
   let firstMatch = null;
+  filteredReports = [];
+  const mapVisibleIds = new Set();
 
-  filteredReports = allReports.filter((report) => {
+  allReports.forEach((report) => {
+    let matches = true;
+
     // 1. Global Search
     if (searchVal) {
-      const rowIdMatch = report.id.toLowerCase().includes(searchVal);
+      const rowIdMatch = report.id?.toLowerCase().includes(searchVal);
       const rowStreetMatch = report.street_name?.toLowerCase().includes(searchVal);
-      if (!rowIdMatch && !rowStreetMatch) return false;
+      if (!rowIdMatch && !rowStreetMatch) matches = false;
     }
 
-    // 2. Specific Drops
-    if (severityVal && report.severity !== severityVal) return false;
-    if (statusVal && report.status !== statusVal) return false;
-    if (locationVal && !report.street_name?.includes(locationVal)) return false;
-    if (idVal && !report.id.includes(idVal)) return false;
+    // 2. Specific Field Filters
+    if (matches && severityVal && report.severity !== severityVal) matches = false;
+    if (matches && locationVal && !report.street_name?.includes(locationVal)) matches = false;
+    if (matches && idVal && !report.id?.toLowerCase().includes(idVal)) matches = false;
 
-    // 3. Date Frame
-    const reportDate = parseFirestoreDate(report.created_at || report.created_at_string);
-    if (reportDate) {
-      if (dateFromVal && reportDate < dateFromVal) return false;
-      if (dateToVal && reportDate > dateToVal) return false;
+    // 3. Date Range Frame
+    if (matches) {
+      const reportDate = parseFirestoreDate(report.created_at || report.created_at_string);
+      if (reportDate) {
+        if (dateFromVal && reportDate < dateFromVal) matches = false;
+        if (dateToVal && reportDate > dateToVal) matches = false;
+      }
     }
 
-    // Capture map pan focus logic
-    if (!firstMatch && (searchVal || idVal)) {
-      firstMatch = report.id;
-    }
+if (matches) {
+  // الماب: يظهر كل الحالات
+  mapVisibleIds.add(report.id);
 
-    return true;
+  // الجدول: فقط غير مكتملة
+  if (report.status === "pending") {
+    filteredReports.push(report);
+  }
+
+  // الفوكس
+  if (!firstMatch && (searchVal || idVal)) {
+    firstMatch = report.id;
+  }
+}
   });
 
   const gMap = getMap();
 
-  // Apply visibilities
-  const filteredIds = new Set(filteredReports.map((r) => r.id));
+  // Sync map markers visibility based on filters (for all statuses)
   Object.entries(markersMap).forEach(([id, obj]) => {
-    const isVisible = filteredIds.has(id);
-    // Render only if state actually mismatches current bound
-    const shouldBeSetTo = isVisible ? gMap : null;
-    if (obj.marker.getMap() !== shouldBeSetTo) {
-      obj.marker.setMap(shouldBeSetTo);
+    const isVisible = mapVisibleIds.has(id);
+    const targetMap = isVisible ? gMap : null;
+    if (obj.marker.getMap() !== targetMap) {
+      obj.marker.setMap(targetMap);
     }
   });
 
-  // Recompute charts to mirror only our CURRENT perspective (filtered set)
-  updateChartsTotals(filteredReports);
-
-  if (firstMatch && typeof window.focusMarker === "function") {
-    // Don't auto-focus if search is empty to prevent snapping map randomly
-    if (searchVal || idVal) {
-        window.focusMarker(firstMatch);
-    }
+  // Don't auto-focus if search is empty to prevent snapping map randomly
+  if (firstMatch && (searchVal || idVal) && typeof window.focusMarker === "function") {
+    window.focusMarker(firstMatch);
   }
 
+  // Reset to first page safely and render table
   currentPage = 1;
   renderTablePaginated();
 }
@@ -462,125 +480,183 @@ function applyFiltersAndSearchCore() {
  */
 const applyFiltersAndSearch = debounce(applyFiltersAndSearchCore, 300);
 
+function updateChartsTotals(reports) {
+  const currentUserId = auth.currentUser?.uid;
+  if (!currentUserId) return;
+
+  let counts = {
+    pending: 0,
+    assignedToMe: 0,
+    completed: 0,
+    inProgress: 0
+  };
+
+  reports.forEach((r) => {
+    // 1. كل البلاغات غير المكتملة (global)
+    if (r.status === "pending") {
+      counts.pending++;
+    }
+
+    // 2. البلاغات الخاصة بالمهندس
+    if (r.assigned_to === currentUserId) {
+      counts.assignedToMe++;
+
+      if (r.status === "completed") counts.completed++;
+      if (r.status === "in_progress") counts.inProgress++;
+    }
+  });
+
+  // 🟢 تحديث الشارتات
+
+  // pending (من كل البلاغات)
+  updateChartDataSafe(totalChart, counts.pending, reports.length);
+
+  // assigned to me (من كل البلاغات)
+  updateChartDataSafe(assignedChart, counts.assignedToMe, reports.length);
+
+  // completed (من بلاغاتي فقط)
+  updateChartDataSafe(completedChart, counts.completed, counts.assignedToMe);
+
+  // in progress (من بلاغاتي فقط)
+  updateChartDataSafe(inProgressChart, counts.inProgress, counts.assignedToMe);
+}
+
+
 /* ===================================================
-   9. Firebase Listeners Initialization
+   10. Initialization & Listeners
 =================================================== */
 function initDataListeners() {
-  // 1. Users Lookup Table
-  onSnapshot(collection(db, "users"), (snapshot) => {
-    usersMap = {};
-    snapshot.docs.forEach((docSnap) => {
-      const data = docSnap.data();
-      usersMap[docSnap.id] = data.name || "-";
+  let isAuthReady = false;
+
+  // 1. Wait for auth first
+  onAuthStateChanged(auth, (user) => {
+    const wasReady = isAuthReady;
+    isAuthReady = true;
+    
+    // Auth dictates our charts perspective
+    updateChartsTotals(filteredReports);
+    if (!wasReady && allReports.length > 0) {
+      applyFiltersAndSearchCore();
+    }
+  });
+
+  // 2. Users
+  onSnapshot(
+    collection(db, "users"),
+    (snapshot) => {
+      usersMap = {};
+      snapshot.docs.forEach((docSnap) => {
+        usersMap[docSnap.id] = docSnap.data().name || "-";
+      });
+
+      if (allReports.length > 0 && isAuthReady) {
+        renderMapMarkers();
+        renderTablePaginated();
+      }
+    },
+    (err) => console.error("Error fetching users:", err)
+  );
+
+  // 3. Reports
+  onSnapshot(
+    collection(db, "reports"),
+    (snapshot) => {
+      allReports = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+
+      // Only run map/filters AFTER auth is ready
+      if (isAuthReady) {
+        updateChartsTotals(allReports);
+        renderMapMarkers();
+        applyFiltersAndSearchCore();
+      }
+    },
+    (err) => console.error("Error fetching reports:", err)
+  );
+}
+
+function bindEvents() {
+  const filterInputs = [
+    searchInput,
+    filterSeverity,
+    filterLocation,
+    filterId,
+    filterDateFrom,
+    filterDateTo,
+  ];
+
+  // Map input events for live filtering
+  filterInputs.forEach((el) => {
+    if (el) el.addEventListener("input", applyFiltersAndSearch);
+  });
+
+  // Reset Filters logic
+  if (resetFiltersBtn) {
+    resetFiltersBtn.addEventListener("click", () => {
+      filterInputs.forEach((el) => {
+        if (el) el.value = "";
+      });
+      applyFiltersAndSearchCore(); // Force instant bypass of debounce
     });
-    // Dynamically re-render logic if reports exist and cross-origin resolved
-    if (allReports.length > 0) {
-      renderMapMarkers();
-      applyFiltersAndSearchCore(); 
+  }
+
+  // Pagination navigation
+  if (prevPageBtn) {
+    prevPageBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTablePaginated();
+      }
+    });
+  }
+
+  if (nextPageBtn) {
+    nextPageBtn.addEventListener("click", () => {
+      const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTablePaginated();
+      }
+    });
+  }
+
+  // Delegated Event Listeners for Table Interactions
+  tableBody?.addEventListener("click", (e) => {
+    const row = e.target.closest("tr");
+    if (!row) return;
+
+    const id = row.getAttribute("data-id");
+    if (!id) return;
+
+    if (e.target.closest(".assign-btn")) {
+      assignReport(id);
+      return;
     }
-  });
 
-  // 2. Main Reports Table
-  onSnapshot(collection(db, "reports"), (snapshot) => {
-    const rawReports = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }));
-
-    // Identify if the app logic is explicitly engineer routing
-    const isEngineerPage = window.location.pathname.includes("eng_dashboard");
-
-    if (isEngineerPage) {
-      // Engineer perspective only works on uncompleted pending items
-      allReports = rawReports.filter((report) => report.status === "pending");
-    } else {
-      allReports = rawReports;
-    }
-
-    // Refresh context efficiently without memory bloat
-    renderMapMarkers();
-    
-    // Natively run the bound logic
-    applyFiltersAndSearchCore(); 
-  });
-}
-
-/* ===================================================
-   10. Bootstrapping & Event Attachments
-=================================================== */
-// Ensure foundational UI systems operate
-initCharts();
-initDataListeners();
-
-// DOM Events (Filter Bindings)
-[
-  searchInput,
-  filterSeverity,
-  filterLocation,
-  filterStatus,
-  filterId,
-  filterDateFrom,
-  filterDateTo,
-].forEach((el) => {
-  if (el) el.addEventListener("input", applyFiltersAndSearch);
-});
-
-// DOM Events (Reset Filters)
-if (resetFiltersBtn) {
-  resetFiltersBtn.addEventListener("click", () => {
-    if (filterSeverity) filterSeverity.value = "";
-    if (filterLocation) filterLocation.value = "";
-    if (filterStatus) filterStatus.value = "";
-    if (filterId) filterId.value = "";
-    if (filterDateFrom) filterDateFrom.value = "";
-    if (filterDateTo) filterDateTo.value = "";
-    if (searchInput) searchInput.value = "";
-    
-    applyFiltersAndSearchCore(); // Force instant re-render bypass debounce
-  });
-}
-
-// DOM Events (Pagination Bindings)
-if (prevPageBtn) {
-  prevPageBtn.addEventListener("click", () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderTablePaginated();
-    }
-  });
-}
-
-if (nextPageBtn) {
-  nextPageBtn.addEventListener("click", () => {
-    const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderTablePaginated();
-    }
-  });
-}
-
-// DOM Events (Delegated Event Listeners for Table Interactions)
-tableBody?.addEventListener("click", (e) => {
-  const row = e.target.closest("tr");
-  if (!row) return;
-
-  const id = row.getAttribute("data-id");
-  if (!id) return;
-
-  if (e.target.closest(".focus-col")) {
-    if (typeof window.focusMarker === "function") {
+    if (e.target.closest(".focus-col") && typeof window.focusMarker === "function") {
       window.focusMarker(id);
     }
-  }
-});
+  });
+}
+
+function initApp() {
+  initCharts();
+  bindEvents();
+  initDataListeners();
+}
+
+// Ensure foundational UI systems operate
+initApp();
 
 /* ===================================================
-   11. Public Window Scope Functions
+   11. Public Window API Scope
 =================================================== */
 window.focusMarker = function (id) {
   const item = markersMap[id];
   const gMap = getMap();
+  
   if (!item || !gMap) return;
 
   gMap.setZoom(15);
@@ -594,3 +670,39 @@ window.focusMarker = function (id) {
   activePopup = new CustomPopup(item.position, item.popupContent);
   activePopup.setMap(gMap);
 };
+
+// Assign report to current engineer
+window.assignReport = async function(id) {
+  const user = auth.currentUser;
+
+  if (!user) {
+    alert("يجب تسجيل الدخول أولاً");
+    return;
+  }
+
+  const report = allReports.find((r) => r.id === id);
+
+  if (!report) return;
+
+  // 🔒 Check if already assigned
+  if (report.assigned_to) {
+    alert("هذا البلاغ تم إسناده بالفعل");
+    return;
+  }
+
+  try {
+    const reportRef = doc(db, "reports", id);
+    await updateDoc(reportRef, {
+      assigned_to: user.uid,
+      assigned_at: serverTimestamp(),
+      status: "in_progress",
+    });
+
+    alert("تم إسناد البلاغ لك بنجاح");
+  } catch (err) {
+    console.error("Error assigning report:", err);
+    alert("فشل في إسناد البلاغ, الرجاء المحاولة مجدداً");
+  }
+};
+
+const assignReport = window.assignReport;
