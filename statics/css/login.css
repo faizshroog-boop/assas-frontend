@@ -1,0 +1,309 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Cairo", sans-serif;
+}
+
+/* =========================================================
+   Login Page Layout
+   الحاوية الأساسية لصفحة تسجيل الدخول
+   - تجعل الصفحة تأخذ كامل ارتفاع الشاشة
+   - تستخدم position relative للسماح بوضع العناصر فوقها
+========================================================= */
+.login-page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* =========================================================
+   Page Background (Map)
+   الخلفية الفاتحة التي تظهر في الجهة اليمنى
+   - تستخدم صورة خريطة المدينة
+   - opacity لتخفيف وضوح الصورة
+========================================================= */
+.page-bg {
+  position: absolute;
+  inset: 0;
+  background: url("../img/map_bg.jpg") center/cover no-repeat;
+  opacity: 0.35;
+  z-index: 0;
+}
+
+/* =========================================================
+   Green Panel
+   اللوحة الخضراء الكبيرة في الجهة اليسرى من الصفحة
+   - تحتوي على الخلفية الخضراء المتدرجة
+   - لها حواف دائرية من الجهة اليمنى
+========================================================= */
+.green-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 73%;
+  background: url("../img/green_v_bg.jpg") center right/cover no-repeat;
+  border-top-right-radius: 40px;
+  border-bottom-right-radius: 40px;
+  z-index: 1;
+}
+
+/* =========================================================
+   Content Layer
+   نضع الشريط العلوي وكرت تسجيل الدخول فوق الخلفيات
+========================================================= */
+.top-bar,
+.login-wrapper {
+  position: relative;
+  z-index: 2;
+}
+
+/* =========================================================
+   Top Bar
+   الشريط العلوي الذي يحتوي على:
+   - شعار عسّاس
+   - اللغة
+   - شعار رؤية 2030
+========================================================= */
+.top-bar {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 5;
+}
+
+/* =========================================================
+   Assas Logo
+   شعار عسّاس في أعلى يمين الصفحة
+========================================================= */
+.top-bar .right {
+  position: absolute;
+  right: 40px;
+}
+
+.assas-logo {
+  height: 80px;
+}
+
+/* =========================================================
+   Vision + Language Section
+   الجزء الأيسر من الشريط العلوي
+   يحتوي على:
+   - زر تغيير اللغة
+   - شعار رؤية 2030
+========================================================= */
+.top-bar .left {
+  position: absolute;
+  left: 40px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================================================
+   Vision 2030 Logo
+   التحكم بحجم شعار الرؤية ومحاذاته
+========================================================= */
+.vision-logo {
+  height: 170px;
+  margin-left: -70px;
+}
+
+/* =========================================================
+   Language Button
+   زر تغيير اللغة (English)
+========================================================= */
+.lang {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: -100px;
+  cursor: pointer;
+  color: #848892; /* نفس لون شعار الرؤية */
+}
+
+/* أيقونة الكرة الأرضية بجانب اللغة */
+.lang svg {
+  width: 16px;
+  height: 16px;
+  stroke: #848892;
+  fill: none;
+  stroke-width: 2;
+}
+
+/* النص داخل زر اللغة */
+.lang-text {
+  line-height: 1;
+}
+
+/* =========================================================
+   Login Wrapper
+   الحاوية التي تحتوي كرت تسجيل الدخول
+   - تجعل الكرت في منتصف اللوحة الخضراء
+========================================================= */
+.login-wrapper {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 73%;
+  height: 100vh;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-right: 120px;
+}
+
+/* =========================================================
+         Login Card
+      ========================================================= */
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  background: #fff;
+  border-radius: 24px;
+  padding: 45px 40px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 3;
+}
+
+/* =========================================================
+         Login Title
+      ========================================================= */
+.login-title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* center the title */
+  color: #0c4f38;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 35px;
+}
+
+/* Back Arrow */
+.back-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: #0c4f38;
+  font-size: 18px;
+  text-decoration: none;
+  background: rgba(12, 79, 56, 0.05);
+  border-radius: 50%;
+  transition: 0.3s;
+  position: absolute;
+  left: -5px;
+}
+
+.back-arrow:hover {
+  transform: translateX(-5px); /* Move leftwards on hover */
+  background: rgba(12, 79, 56, 0.15);
+  color: #08382a;
+}
+
+/* =========================================================
+         Input Fields Container
+      ========================================================= */
+.input-group {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+/* Input Icons */
+.input-icon {
+  position: absolute;
+  left: 14px; /* Physical left side for LTR input */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.input-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: #0c4f38;
+  fill: none;
+  stroke-width: 2.5;
+}
+
+/* Input Fields */
+.input-group input {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid #e0e0e0;
+  padding: 12px 15px 12px 45px;
+  font-size: 16px;
+  outline: none;
+  direction: ltr;
+  text-align: left;
+}
+
+.input-group input:focus {
+  border-bottom: 2px solid #0c4f38;
+}
+
+.input-group input::placeholder {
+  color: #a0a0a0;
+}
+
+/* =========================================================
+         Forgot Password
+      ========================================================= */
+.forgot {
+  text-align: right;
+  margin-bottom: 30px;
+}
+
+.forgot a {
+  color: #0c4f38;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.forgot a:hover {
+  color: #08382a;
+  text-decoration: underline;
+}
+
+/* =========================================================
+         Login Button
+      ========================================================= */
+.login-btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 14px;
+  background: #0c4f38;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.3s ease,
+    transform 0.1s ease;
+}
+
+.login-btn:hover {
+  background: #08382a;
+}
+
+.login-btn:active {
+  transform: scale(0.98);
+}

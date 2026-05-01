@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة المهندس</title>
+
+    <!-- Assas icon -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="../statics/img/Assas_clear_logo.png"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <!-- Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- style sheet -->
+    <link rel="stylesheet" href="../statics/css/dashboard.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <div id="sidebar-container"></div>
+
+      <!-- Main Content -->
+      <main>
+        <div class="topbar">
+          <h2>لوحة المهندس</h2>
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="ابحث عن موقع أو رقم البلاغ "
+            />
+          </div>
+        </div>
+
+        <!-- Charts-->
+        <div
+          class="chart-container"
+          style="
+            display: flex;
+            gap: 85px;
+            justify-content: center;
+            align-items: center;
+          "
+        >
+          <div style="text-align: center">
+            <canvas id="assignedChart" width="150" height="150"></canvas>
+            <div style="margin-top: 8px">بلاغاتي</div>
+          </div>
+
+          <div style="text-align: center">
+            <canvas id="completedChart" width="150" height="150"></canvas>
+            <div style="margin-top: 8px">مكتملة</div>
+          </div>
+
+          <div style="text-align: center">
+            <canvas id="inProgressChart" width="150" height="150"></canvas>
+            <div style="margin-top: 8px">قيد التنفيذ</div>
+          </div>
+
+          <div style="text-align: center">
+            <canvas id="totalChart" width="150" height="150"></canvas>
+            <div style="margin-top: 8px">كل البلاغات</div>
+          </div>
+        </div>
+
+        <!-- Map -->
+        <div id="map"></div>
+
+        <!-- Filters Section -->
+        <div class="filter-section">
+          <div class="filter-group">
+            <select id="filterSeverity">
+              <option value="" disabled selected>الخطورة</option>
+              <option value="">الكل</option>
+              <option value="high">عالية</option>
+              <option value="medium">متوسطة</option>
+              <option value="low">منخفضة</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <select id="filterDamageType">
+              <option value="" disabled selected>نوع الضرر</option>
+              <option value="">الكل</option>
+              <option value="pothole">حفرة</option>
+              <option value="crack">تشقق</option>
+              <option value="water">تجمع مياه</option>
+              <option value="normal">سليم</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <select id="filterLocation">
+              <option value="" disabled selected>الموقع</option>
+              <option value="">الكل</option>
+              <option value="الرياض">الرياض</option>
+              <option value="جدة">جدة</option>
+              <option value="الدمام">الدمام</option>
+              <option value="الخبر">الخبر</option>
+              <option value="مكة">مكة</option>
+              <option value="المدينة المنورة">المدينة المنورة</option>
+              <option value="الجبيل">الجبيل</option>
+              <option value="الظهران">الظهران</option>
+              <option value="بريدة">بريدة</option>
+              <option value="الرس">الرس</option>
+              <option value="عنيزة">عنيزة</option>
+              <option value="تبوك">تبوك</option>
+              <option value="حائل">حائل</option>
+              <option value="عرعر">عرعر</option>
+              <option value="جازان">جازان</option>
+              <option value="نجران">نجران</option>
+              <option value="الباحة">الباحة</option>
+              <option value="القنفذة">القنفذة</option>
+              <option value="سكاكا">سكاكا</option>
+              <option value="الأفلاج">الأفلاج</option>
+              <option value="وادي الدواسر">وادي الدواسر</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>من</label>
+            <input type="date" id="filterDateFrom" />
+          </div>
+          <div class="filter-group">
+            <label>إلى</label>
+            <input type="date" id="filterDateTo" />
+          </div>
+
+          <div class="filter-actions">
+            <button class="filter-btn reset-btn" id="resetFiltersBtn">
+              <i class="fa-solid fa-rotate-right"></i> إعادة ضبط
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <table>
+          <thead>
+            <tr>
+              <th>إسناد</th>
+              <th>رقم البلاغ</th>
+              <th>تاريخ الإنشاء</th>
+              <th>الموقع</th>
+              <th>الضرر</th>
+              <th>الخطورة</th>
+              <th>التنبؤ</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pagination" id="paginationControls">
+          <button class="page-btn" id="prevPageBtn" disabled>
+            <i class="fas fa-chevron-right"></i> السابق
+          </button>
+          <span class="page-info" id="pageInfo">1 من 1</span>
+          <button class="page-btn" id="nextPageBtn" disabled>
+            التالي <i class="fas fa-chevron-left"></i>
+          </button>
+        </div>
+
+        <div class="toast-container"></div>
+      </main>
+    </div>
+
+    <!-- Google Maps Initialization -->
+    <script>
+      /* ===================================================
+         1. Public Window Functions (Pre-Init)
+      =================================================== */
+      let map;
+
+      // Ensure initMap is available globally for Google Maps API callback
+      window.initMap = function () {
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 11,
+          center: { lat: 24.7136, lng: 46.6753 }, // Riyadh
+        });
+      };
+    </script>
+
+    <!-- Firebase + Dashboard Logic -->
+    <script type="module" src="../statics/js/eng_dashboard.js"></script>
+
+    <!-- Google Maps -->
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-uPN8afr4qXu5JE1Iew0wR5WfK3YscwY&callback=initMap"
+    ></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <script type="module" src="../statics/js/loadSidebar.js"></script>
+  </body>
+</html>

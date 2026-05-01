@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مشاريعي</title>
+
+    <!-- Assas icon -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="../statics/img/Assas_clear_logo.png"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <!-- Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- style sheet -->
+    <link rel="stylesheet" href="../statics/css/my_projects.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <div id="sidebar-container"></div>
+
+      <!-- Main Content -->
+      <main>
+        <div class="topbar">
+          <h2>مشاريعي</h2>
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="ابحث عن موقع أو رقم البلاغ "
+            />
+          </div>
+        </div>
+
+        <!-- report details card -->
+        <div id="reportDetailsCard" class="report-details hidden"></div>
+
+        <!-- Filters Section -->
+        <div class="filter-section">
+          <div class="filter-group">
+            <select id="filterStatus">
+              <option value="" disabled selected>الحالة</option>
+              <option value="">الكل</option>
+              <option value="completed">مكتمل</option>
+              <option value="in_progress">قيد التنفيذ</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <select id="filterSeverity">
+              <option value="" disabled selected>الخطورة</option>
+              <option value="">الكل</option>
+              <option value="high">عالية</option>
+              <option value="medium">متوسطة</option>
+              <option value="low">منخفضة</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <select id="filterDamageType">
+              <option value="" disabled selected>نوع الضرر</option>
+              <option value="">الكل</option>
+              <option value="pothole">حفرة</option>
+              <option value="crack">تشقق</option>
+              <option value="water">تجمع مياه</option>
+              <option value="normal">سليم</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <select id="filterLocation">
+              <option value="" disabled selected>الموقع</option>
+              <option value="">الكل</option>
+              <option value="الرياض">الرياض</option>
+              <option value="جدة">جدة</option>
+              <option value="الدمام">الدمام</option>
+              <option value="الخبر">الخبر</option>
+              <option value="مكة">مكة</option>
+              <option value="المدينة المنورة">المدينة المنورة</option>
+              <option value="الجبيل">الجبيل</option>
+              <option value="الظهران">الظهران</option>
+              <option value="بريدة">بريدة</option>
+              <option value="الرس">الرس</option>
+              <option value="عنيزة">عنيزة</option>
+              <option value="تبوك">تبوك</option>
+              <option value="حائل">حائل</option>
+              <option value="عرعر">عرعر</option>
+              <option value="جازان">جازان</option>
+              <option value="نجران">نجران</option>
+              <option value="الباحة">الباحة</option>
+              <option value="القنفذة">القنفذة</option>
+              <option value="سكاكا">سكاكا</option>
+              <option value="الأفلاج">الأفلاج</option>
+              <option value="وادي الدواسر">وادي الدواسر</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>من</label>
+            <input type="date" id="filterDateFrom" />
+          </div>
+          <div class="filter-group">
+            <label>إلى</label>
+            <input type="date" id="filterDateTo" />
+          </div>
+
+          <div class="filter-actions">
+            <button class="filter-btn reset-btn" id="resetFiltersBtn">
+              <i class="fa-solid fa-rotate-right"></i> إعادة ضبط
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <table>
+          <thead>
+            <tr>
+              <th>تحديث</th>
+              <th>رقم البلاغ</th>
+              <th>الحالة</th>
+              <th>الموقع</th>
+              <th>تاريخ الإنشاء</th>
+              <th>تاريخ الإستلام</th>
+              <th>تاريخ الإكتمال</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pagination" id="paginationControls">
+          <button class="page-btn" id="prevPageBtn" disabled>
+            <i class="fas fa-chevron-right"></i> السابق
+          </button>
+          <span class="page-info" id="pageInfo">1 من 1</span>
+          <button class="page-btn" id="nextPageBtn" disabled>
+            التالي <i class="fas fa-chevron-left"></i>
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <!-- Firebase + Dashboard Logic -->
+    <script type="module" src="../statics/js/my_projects.js"></script>
+    <script type="module" src="../statics/js/loadSidebar.js"></script>
+  </body>
+</html>

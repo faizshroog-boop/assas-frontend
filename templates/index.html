@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>عساس</title>
+
+    <!-- Assas icon -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="../statics/img/Assas_clear_logo.png"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <!-- Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- style sheet -->
+    <link rel="stylesheet" href="../statics/css/index.css" />
+  </head>
+  <body class="home-page">
+    <!-- Navbar -->
+    <header class="top-bar">
+      <div class="right">
+        <img
+          src="../statics/img/Assas_clear_logo.png"
+          class="assas-logo"
+          alt="ASSAS Logo"
+        />
+      </div>
+
+      <div class="left">
+        <span class="lang">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M3 12h18"></path>
+            <path d="M12 3a15 15 0 0 1 0 18"></path>
+            <path d="M12 3a15 15 0 0 0 0 18"></path>
+          </svg>
+          <span class="lang-text">English</span>
+        </span>
+
+        <img
+          src="../statics/img/saudi_green_palm.png"
+          class="vision-logo"
+          alt="Saudi Vision 2030"
+        />
+      </div>
+    </header>
+
+    <!-- Main Section -->
+    <section class="hero">
+      <h1>أهلاً بك في عسّاس</h1>
+      <p>
+        منصتك الذكية لرصد وتحسين جودة الطرق لخدمة المدن والمجتمع وتعزيز كفاءة
+        الصيانة الذكية.
+      </p>
+
+      <div class="cards">
+        <!-- موظف عساس -->
+        <div class="card employee">
+          <div class="card-content">
+            <h3>موظف عسّاس</h3>
+            <p>الصلاحيات الإدارية والتحليل</p>
+            <a href="emp_login.html" class="card-arrow">
+              دخول <i class="fa-solid fa-arrow-left"></i>
+            </a>
+          </div>
+          <img src="../statics/img/Assas_green_logo.png" class="card-logo" />
+        </div>
+
+        <!-- مهندس عساس -->
+        <div class="card engineer">
+          <div class="card-content">
+            <h3>مهندس عسّاس</h3>
+            <p>لاستلام المهام الميدانية</p>
+            <a href="eng_login.html" class="card-arrow">
+              دخول <i class="fa-solid fa-arrow-left"></i>
+            </a>
+          </div>
+          <img src="../statics/img/Assas_white_logo.png" class="card-logo" />
+        </div>
+      </div>
+    </section>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("logout") === "success") {
+          alert("تم تسجيل الخروج بنجاح. شكراً لاستخدامك النظام!");
+
+          // تنظيف الرابط ليبقى احترافياً (بدون ?logout=success)
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname,
+          );
+        }
+      });
+    </script>
+  </body>
+</html>

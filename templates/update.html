@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تحديث البلاغ</title>
+
+    <!-- Assas icon -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="../statics/img/Assas_clear_logo.png"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="../statics/css/update.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <div id="sidebar-container"></div>
+
+      <main>
+        <section class="update-card">
+          <div class="top-row">
+            <h2 id="reportId" class="report-id">#---</h2>
+            <span id="statusBadge" class="status-badge">جاري التحميل...</span>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-step" id="step1"></div>
+            <div class="progress-line"></div>
+            <div class="progress-step" id="step2"></div>
+            <div class="progress-line"></div>
+            <div class="progress-step" id="step3"></div>
+          </div>
+
+          <div class="content-grid">
+            <div class="report-side">
+              <h3>الصورة المتضررة</h3>
+              <div id="reportImageContainer" class="report-image-box">
+                <span class="placeholder-text">جاري تحميل الصورة...</span>
+              </div>
+            </div>
+
+            <div class="upload-side">
+              <h3>الصورة بعد الإصلاح</h3>
+
+              <div class="small-upload-row">
+                <label for="completionImage" class="small-upload-btn">
+                  <i class="fa-solid fa-image"></i>
+                  اختر صورة
+                </label>
+                <input id="completionImage" type="file" accept="image/*" />
+                <span id="fileNameDisplay" class="file-name"
+                  >لم يتم اختيار ملف</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="status-section">
+            <h3>الحالة</h3>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="status" value="completed" />
+                مكتمل
+              </label>
+
+              <label class="radio-option">
+                <input type="radio" name="status" value="pending" />
+                تنازل
+              </label>
+            </div>
+          </div>
+
+          <div class="notes-section">
+            <label for="notes">ملاحظات</label>
+            <textarea
+              id="notes"
+              placeholder="اكتب ملاحظات المهندس هنا..."
+            ></textarea>
+          </div>
+
+          <div class="action-row">
+            <button id="updateBtn">تحديث الحالة</button>
+          </div>
+        </section>
+        <div id="toastContainer" class="toast-container"></div>
+      </main>
+    </div>
+
+    <script type="module" src="../statics/js/loadSidebar.js"></script>
+    <script type="module" src="../statics/js/update.js"></script>
+  </body>
+</html>

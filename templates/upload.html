@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload</title>
+
+    <!-- Assas icon -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="../statics/img/Assas_clear_logo.png"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <!-- Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- style sheet -->
+    <link rel="stylesheet" href="../statics/css/upload.css" />
+
+    <!-- bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="layout">
+      <!-- Sidebar -->
+      <div id="sidebar-container"></div>
+
+      <!-- Main Content -->
+      <main>
+        <!-- Map -->
+        <div id="map"></div>
+        <div class="content-grid">
+          <!-- Inputs -->
+          <div class="form-box">
+            <input
+              type="text"
+              id="streetName"
+              class="form-control mb-2"
+              placeholder="اسم الشارع"
+            />
+
+            <input
+              type="number"
+              id="latitude"
+              class="form-control mb-2"
+              placeholder="خط العرض"
+            />
+
+            <input
+              type="number"
+              id="longitude"
+              class="form-control mb-2"
+              placeholder="خط الطول"
+            />
+
+            <button id="submitBtn" class="btn btn-success mt-3">
+              إرسال البلاغ
+            </button>
+          </div>
+
+          <!-- Upload -->
+          <div class="upload-box">
+            <form class="file-upload-form">
+              <label for="fileInput" class="file-upload-label">
+                <div class="file-upload-design">
+                  <svg viewBox="0 0 640 512">
+                    <path
+                      d="M144 480C64.5 480 0 415.5 0 336c0-62.8 40.2-116.2 96.2-135.9c-.1-2.7-.2-5.4-.2-8.1c0-88.4 71.6-160 160-160c59.3 0 111 32.2 138.7 80.2C409.9 102 428.3 96 448 96c53 0 96 43 96 96c0 12.2-2.3 23.8-6.4 34.6C596 238.4 640 290.1 640 352c0 70.7-57.3 128-128 128H144zm79-217c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l39-39V392c0 13.3 10.7 24 24 24s24-10.7 24-24V257.9l39 39c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-80-80c-9.4-9.4-24.6-9.4-33.9 0l-80 80z"
+                    ></path>
+                  </svg>
+                  <p id="fileNameDisplay">اسحب الملف هنا</p>
+                  <p>أو</p>
+                  <span class="browse-button">اختر ملف</span>
+                </div>
+                <input id="fileInput" type="file" accept="image/*" />
+              </label>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Google Maps API must be loaded after map.js is defined -->
+    <script type="module" src="../statics/js/map.js"></script>
+    <script type="module" src="../statics/js/upload.js"></script>
+
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-uPN8afr4qXu5JE1Iew0wR5WfK3YscwY&callback=initMap"
+    ></script>
+
+    <!-- bootstrap -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+    ></script>
+    <script type="module" src="../statics/js/loadSidebar.js"></script>
+  </body>
+</html>

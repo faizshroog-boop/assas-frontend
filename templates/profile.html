@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Engineer Profile</title>
+
+    <!-- Assas icon -->
+    <link rel="icon" type="image/png" href="../statics/img/Assas_clear_logo.png" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
+
+    <!-- style sheet -->
+    <link rel="stylesheet" href="../statics/css/profile.css" />
+
+    <!-- ستايل إضافي مخصص لحركة "تحرير" فوق الصورة -->
+    <style>
+      .profile-img-container {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        cursor: pointer;
+      }
+      .profile-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #145b44;
+      }
+      .edit-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .profile-img-container:hover .edit-overlay {
+        opacity: 1;
+      }
+      #save_image_btn {
+        margin-top: 10px;
+        background-color: #145b44;
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-family: 'Cairo', sans-serif;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div id="sidebar-container"></div>
+
+      <main>
+        <div class="profile-header">
+          <!-- تعديل: حاوية الصورة مع خاصية التحرير -->
+          <div class="profile-img-container" onclick="document.getElementById('imageInput').click()">
+            <img id="profile_img" src="../statics/img/user.png" class="profile-img" />
+            <div class="edit-overlay">
+              <span><i class="fa-solid fa-camera"></i> تحرير</span>
+            </div>
+          </div>
+          
+          <!-- Input مخفي لرفع الملفات -->
+          <input type="file" id="imageInput" accept="image/*" style="display: none;" />
+          
+          <div class="profile-text">
+            <h2 id="name">...</h2>
+            <p id="employee_id">...</p>
+            <span id="role"></span><br />
+            <span id="role2"></span>
+            
+            <!-- زر الحفظ يظهر فقط عند اختيار صورة جديدة -->
+            <button id="save_image_btn" style="display: none;">حفظ الصورة</button>
+          </div>
+
+          <i class="fa-solid fa-arrow-left back-icon" onclick="goBack()"></i>
+        </div>
+
+        <div class="contact-row">
+          <span><i class="fa-solid fa-phone"></i> <span id="phone"></span></span>
+          <span><i class="fa-solid fa-envelope"></i> <span id="email"></span></span>
+        </div>
+
+        <h3 class="section-title">معلومات العمل</h3>
+        <section class="card">
+          <div class="grid">
+            <div><strong>القسم</strong><span id="department"></span></div>
+            <div><strong>الدور الوظيفي</strong><span id="role_display"></span></div>
+            <div><strong>حالة الحساب</strong><span id="status" class="status-active"></span></div>
+            <div><strong>تاريخ الانضمام</strong><span id="joined_date"></span></div>
+          </div>
+        </section>
+
+        <h3 class="section-title">ملخص النشاط</h3>
+        <section class="card">
+          <div class="grid">
+            <div><strong id="task_label">عدد البلاغات المستلمة</strong><span id="total_reports"></span></div>
+            <div><strong>بلاغات قيد المعالجة</strong><span id="reports_in_progress"></span></div>
+            <div><strong>بلاغات مكتملة</strong><span id="completed_reports"></span></div>
+            <div><strong>آخر نشاط</strong><span id="last_activity"></span></div>
+          </div>
+        </section>
+
+        <h3 class="section-title">الإعدادات</h3>
+        <section class="card">
+          <div class="settings">
+            <span>الوضع الليلي</span>
+            <label class="switch">
+              <input type="checkbox" onchange="document.body.classList.toggle('dark')" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="../statics/js/profile.js"></script>
+    <script type="module" src="../statics/js/loadSidebar.js"></script>
+    
+    <script>
+      function goBack() {
+        window.history.back();
+      }
+    </script>
+  </body>
+</html>
