@@ -1,7 +1,15 @@
 
 /* =================================================== IMPORTS =================================================== */
 import { db } from "./firebase.js";
-import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  deleteDoc,
+  doc
+}
+from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 /* =================================================== CONSTANTS =================================================== */
 const itemsPerPage = 8;
@@ -56,6 +64,26 @@ const getColor = (report) => {
   if (sev === "low" || sev === "yellow" || sev === "منخفضة") return "yellow";
   return "green";
 };
+
+function normalizeDamageType(value) {
+  const damage = String(value || "").trim().toLowerCase();
+
+  if (["pothole", "hole", "حفرة"].includes(damage)) return "pothole";
+  if (["crack", "cracks", "تشقق", "شقوق"].includes(damage)) return "crack";
+  if (["water", "water_pool", "water accumulation", "تجمع مياه"].includes(damage)) return "water";
+  if (["normal", "safe", "سليم", "طبيعي"].includes(damage)) return "normal";
+
+  return damage;
+}
+
+function getReportDamageType(report) {
+  return normalizeDamageType(
+    report.damage_type ||
+    report.damageType ||
+    report.damage ||
+    report.prediction
+  );
+}
 
 function updateChartDataSafe(chartInstance, count, total) {
   if (!chartInstance) return;
@@ -284,7 +312,7 @@ function renderTablePaginated() {
               </td>
               <td>${statusTranslation[report.status] || "-"}</td>
               <td>${report.street_name || "غير محدد"}</td>
-              <td>${damageTypeTranslation[report.damage_type] || report.damage_type || "-"}</td>
+              <td>${damageTypeTranslation[getReportDamageType(report)] || report.damage_type || report.damageType || report.damage || "-"}</td>
               <td>${report.prediction_note || report.prediction || "لا يوجد تحليل"}</td>
               <td>
                 <span class="status-dot ${color}"></span>
@@ -318,14 +346,14 @@ function applyFiltersAndSearch() {
     let isMatch = true;
 
     if (searchVal) {
-      const idMatch = report.id?.includes(searchVal);
+      const idMatch = report.id?.toLowerCase().includes(searchVal);
       const streetMatch = report.street_name?.toLowerCase().includes(searchVal);
       if (!idMatch && !streetMatch) isMatch = false;
     }
 
     if (severityVal && report.severity !== severityVal) isMatch = false;
     if (statusVal && report.status !== statusVal) isMatch = false;
-    if (damageVal && report.damage_type !== damageVal) isMatch = false;
+    if (damageVal && getReportDamageType(report) !== normalizeDamageType(damageVal)) isMatch = false;
 
     if (locationVal && (!report.street_name || !report.street_name.includes(locationVal))) {
       isMatch = false;
@@ -363,11 +391,15 @@ function applyFiltersAndSearch() {
 [
   searchInput,
   filterSeverity,
+  filterDamageType,
   filterLocation,
   filterStatus,
   filterDateFrom,
   filterDateTo,
-].forEach((el) => el.addEventListener("input", applyFiltersAndSearch));
+].forEach((el) => {
+  el.addEventListener("input", applyFiltersAndSearch);
+  el.addEventListener("change", applyFiltersAndSearch);
+});
 
 prevPageBtn.addEventListener("click", () => {
   if (currentPage > 1) {
@@ -414,6 +446,19 @@ mediumChart = createChart("mediumChart", "#f39c12");
 lowChart = createChart("lowChart", "#f1c40f");
 completedChart = createChart("completedChart", "#2ecc71");
 
+onSnapshot(collection(db, "users"), (snapshot) => {
+    usersMap = {};
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      usersMap[docSnap.id] = data.name || data.fullName || data.displayName || "-";
+    });
+
+    if (allReports.length > 0) {
+      renderAllReports();
+    }
+  });
+
 onSnapshot(collection(db, "reports"), (snapshot) => {
   allReports = snapshot.docs.map((docSnap) => ({
     id: docSnap.id,
@@ -440,19 +485,6 @@ onSnapshot(collection(db, "reports"), (snapshot) => {
     }
   });
 
-  onSnapshot(collection(db, "users"), (snapshot) => {
-    usersMap = {};
-
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      usersMap[docSnap.id] = data.name || data.fullName || data.displayName || "-";
-    });
-
-    if (allReports.length > 0) {
-      renderAllReports();
-    }
-  });
-
   renderAllReports();
 
   updateChartDataSafe(highChart, counts.high, totalReports);
@@ -462,3 +494,213 @@ onSnapshot(collection(db, "reports"), (snapshot) => {
 
   applyFiltersAndSearch();
 });
+
+const notificationBtn =
+  document.getElementById("notificationBtn");
+
+const notificationPanel =
+  document.getElementById("notificationPanel");
+
+if (notificationBtn && notificationPanel) {
+
+  notificationBtn.addEventListener("click", () => {
+
+    notificationPanel.classList.toggle("hidden");
+    if (!notificationPanel.classList.contains("hidden")) {
+      markNotificationsAsRead();
+    }
+
+  });
+
+}
+
+const notificationList =
+  document.getElementById("notificationList");
+
+const notificationCount =
+  document.getElementById("notificationCount");
+
+const notificationIcons = {
+  complete: "fa-check",
+  success: "fa-check",
+  upload: "fa-cloud-arrow-up",
+  assign: "fa-user-plus",
+  revert: "fa-rotate-left",
+  delete: "fa-trash",
+  error: "fa-triangle-exclamation",
+  update: "fa-pen-to-square",
+  general: "fa-bell",
+};
+
+const notificationTypes = new Set(Object.keys(notificationIcons));
+const readNotificationStorageKey = "assasReadNotificationIds";
+const notificationLifetimeMs = 7 * 24 * 60 * 60 * 1000;
+let currentNotificationIds = [];
+
+function getReadNotificationIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(readNotificationStorageKey)) || []);
+  }
+  catch (error) {
+    return new Set();
+  }
+}
+
+function saveReadNotificationIds(ids) {
+  localStorage.setItem(readNotificationStorageKey, JSON.stringify([...ids]));
+}
+
+function getNotificationDate(timestamp) {
+  if (!timestamp) return null;
+  if (typeof timestamp.toDate === "function") return timestamp.toDate();
+  const date = new Date(timestamp);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+function isExpiredNotification(data) {
+  const createdAt = getNotificationDate(data.createdAt);
+  return createdAt && Date.now() - createdAt.getTime() > notificationLifetimeMs;
+}
+
+function removeExpiredNotification(id) {
+  deleteDoc(doc(db, "activity_logs", id)).catch((error) => {
+    console.error("Notification cleanup error:", error);
+  });
+}
+
+function updateNotificationBadge() {
+  if (!notificationCount) return;
+
+  const readIds = getReadNotificationIds();
+  const unreadCount = currentNotificationIds.filter((id) => !readIds.has(id)).length;
+
+  notificationCount.textContent = unreadCount;
+  notificationCount.classList.toggle("hidden", unreadCount === 0);
+  notificationBtn?.classList.toggle("has-unread", unreadCount > 0);
+}
+
+function markNotificationsAsRead() {
+  const readIds = getReadNotificationIds();
+
+  currentNotificationIds.forEach((id) => readIds.add(id));
+  saveReadNotificationIds(readIds);
+  updateNotificationBadge();
+}
+
+function getNotificationType(type) {
+  return notificationTypes.has(type) ? type : "general";
+}
+
+const q = query(
+  collection(db, "activity_logs"),
+  orderBy("createdAt", "desc")
+);
+
+onSnapshot(q, (snapshot) => {
+
+  if (!notificationList || !notificationCount) return;
+
+  const freshDocs = [];
+
+  snapshot.docs.forEach((docSnap) => {
+    const data = docSnap.data();
+
+    if (isExpiredNotification(data)) {
+      removeExpiredNotification(docSnap.id);
+      return;
+    }
+
+    freshDocs.push(docSnap);
+  });
+
+  currentNotificationIds = freshDocs.map((docSnap) => docSnap.id);
+
+  const readIds = getReadNotificationIds();
+  const freshIdSet = new Set(currentNotificationIds);
+
+  [...readIds].forEach((id) => {
+    if (!freshIdSet.has(id)) readIds.delete(id);
+  });
+  saveReadNotificationIds(readIds);
+
+  notificationList.innerHTML = "";
+
+  updateNotificationBadge();
+
+  if (freshDocs.length === 0) {
+    const empty =
+      document.createElement("div");
+
+    empty.className =
+      "notification-empty";
+
+    empty.textContent =
+      "لا توجد إشعارات حالياً";
+
+    notificationList.appendChild(empty);
+    return;
+  }
+
+  freshDocs.forEach((doc) => {
+
+    const data = doc.data();
+    const type =
+      getNotificationType(data.type);
+    const isUnread =
+      !readIds.has(doc.id);
+
+    const div =
+      document.createElement("div");
+
+    div.className =
+      `notification-item ${type}${isUnread ? " unread" : ""}`;
+
+    const icon =
+      document.createElement("div");
+
+    icon.className =
+      "notification-icon";
+
+    icon.innerHTML =
+      `<i class="fa-solid ${notificationIcons[type]}"></i>`;
+
+    const content =
+      document.createElement("div");
+
+    const title =
+      document.createElement("div");
+
+    title.className =
+      "notification-title";
+
+    title.textContent =
+      data.message || "";
+
+    const time =
+      document.createElement("div");
+
+    time.className =
+      "notification-time";
+
+    time.textContent =
+      formatTime(data.createdAt);
+
+    content.appendChild(title);
+    content.appendChild(time);
+    div.appendChild(icon);
+    div.appendChild(content);
+
+    notificationList.appendChild(div);
+
+  });
+
+});
+function formatTime(timestamp) {
+
+  if (!timestamp) return "";
+
+  const date = timestamp.toDate();
+
+  return date.toLocaleString("ar-SA");
+
+}

@@ -609,3 +609,53 @@ aside ul li:hover {
     opacity: 1;
   }
 }
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.filter-toggle {
+  display: flex;
+  background: #e0e0e0;
+  padding: 4px;
+  border-radius: 10px;
+  gap: 5px;
+}
+
+.toggle-btn {
+  border: none;
+  padding: 6px 15px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: "Cairo";
+  font-weight: 600;
+  transition: 0.3s;
+  background: transparent;
+  color: #666;
+}
+
+.toggle-btn.active {
+  background: var(--green);
+  color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 820px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search-box {
+    width: auto;
+  }
+}

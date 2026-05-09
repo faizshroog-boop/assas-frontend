@@ -6,13 +6,23 @@
     <title>Engineer Profile</title>
 
     <!-- Assas icon -->
-    <link rel="icon" type="image/png" href="../statics/img/Assas_clear_logo.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="../statics/img/Assas_clear_logo.png"
+    />
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
 
     <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- style sheet -->
     <link rel="stylesheet" href="../statics/css/profile.css" />
@@ -58,7 +68,7 @@
         padding: 5px 15px;
         border-radius: 20px;
         cursor: pointer;
-        font-family: 'Cairo', sans-serif;
+        font-family: "Cairo", sans-serif;
       }
     </style>
   </head>
@@ -70,51 +80,84 @@
       <main>
         <div class="profile-header">
           <!-- تعديل: حاوية الصورة مع خاصية التحرير -->
-          <div class="profile-img-container" onclick="document.getElementById('imageInput').click()">
+          <div
+            class="profile-img-container"
+            onclick="document.getElementById('imageInput').click()"
+          >
             <!-- في profile.html استبدلي سطر الصورة بهذا -->
-            <img id="profile_img" src="https://ui-avatars.com/api/?name=User&background=145b44&color=fff" class="profile-img" />
+            <img
+              id="profile_img"
+              src="https://ui-avatars.com/api/?name=User&background=145b44&color=fff"
+              class="profile-img"
+            />
             <div class="edit-overlay">
               <span><i class="fa-solid fa-camera"></i> تحرير</span>
             </div>
           </div>
-          
+
           <!-- Input مخفي لرفع الملفات -->
-          <input type="file" id="imageInput" accept="image/*" style="display: none;" />
-          
+          <input
+            type="file"
+            id="imageInput"
+            accept="image/*"
+            style="display: none"
+          />
+
           <div class="profile-text">
             <h2 id="name"></h2>
             <p id="employee_id"></p>
             <!-- <span id="role"></span><br /> -->
             <span id="role2"></span>
-            
+
             <!-- زر الحفظ يظهر فقط عند اختيار صورة جديدة -->
-            <button id="save_image_btn" style="display: none;">حفظ الصورة</button>
+            <button id="save_image_btn" style="display: none">
+              حفظ الصورة
+            </button>
           </div>
 
           <i class="fa-solid fa-arrow-left back-icon" onclick="goBack()"></i>
         </div>
 
         <div class="contact-row">
-          <span><i class="fa-solid fa-phone"></i> <span id="phone"></span></span>
-          <span><i class="fa-solid fa-envelope"></i> <span id="email"></span></span>
+          <span
+            ><i class="fa-solid fa-phone"></i> <span id="phone"></span
+          ></span>
+          <span
+            ><i class="fa-solid fa-envelope"></i> <span id="email"></span
+          ></span>
         </div>
 
         <h3 class="section-title">معلومات العمل</h3>
         <section class="card">
           <div class="grid">
             <div><strong>القسم</strong><span id="department"></span></div>
-            <div><strong>الدور الوظيفي</strong><span id="role_display"></span></div>
-            <div><strong>حالة الحساب</strong><span id="status" class="status-active"></span></div>
-            <div><strong>تاريخ الانضمام</strong><span id="joined_date"></span></div>
+            <div>
+              <strong>الدور الوظيفي</strong><span id="role_display"></span>
+            </div>
+            <div>
+              <strong>حالة الحساب</strong
+              ><span id="status" class="status-active"></span>
+            </div>
+            <div>
+              <strong>تاريخ الانضمام</strong><span id="joined_date"></span>
+            </div>
           </div>
         </section>
 
         <h3 class="section-title">ملخص النشاط</h3>
         <section class="card">
           <div class="grid">
-            <div><strong id="task_label">عدد البلاغات المستلمة</strong><span id="total_reports"></span></div>
-            <div><strong>بلاغات قيد المعالجة</strong><span id="reports_in_progress"></span></div>
-            <div><strong>بلاغات مكتملة</strong><span id="completed_reports"></span></div>
+            <div>
+              <strong id="task_label">عدد البلاغات المستلمة</strong
+              ><span id="total_reports"></span>
+            </div>
+            <div>
+              <strong>بلاغات قيد المعالجة</strong
+              ><span id="reports_in_progress"></span>
+            </div>
+            <div>
+              <strong>بلاغات مكتملة</strong><span id="completed_reports"></span>
+            </div>
             <div><strong>آخر نشاط</strong><span id="last_activity"></span></div>
           </div>
         </section>
@@ -124,7 +167,10 @@
           <div class="settings">
             <span>الوضع الليلي</span>
             <label class="switch">
-              <input type="checkbox" onchange="document.body.classList.toggle('dark')" />
+              <input
+                type="checkbox"
+                onchange="document.body.classList.toggle('dark')"
+              />
               <span class="slider"></span>
             </label>
           </div>
@@ -134,7 +180,7 @@
 
     <script type="module" src="../statics/js/profile.js"></script>
     <script type="module" src="../statics/js/loadSidebar.js"></script>
-    
+
     <script>
       function goBack() {
         window.history.back();

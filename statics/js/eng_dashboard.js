@@ -1,8 +1,9 @@
 
 /* =================================================== IMPORTS =================================================== */
 import { db, auth } from "./firebase.js";
-import { collection, onSnapshot, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { collection, onSnapshot, updateDoc, doc, serverTimestamp, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { addActivity } from "./utils.js";
 
 /* =================================================== CONSTANTS =================================================== */
 const statusTranslation = {
@@ -382,6 +383,15 @@ window.assignReport = async function(id) {
       assigned_at: serverTimestamp(),
       status: "in_progress",
     });
+    const engineerName = usersMap[user.uid] || user.displayName || user.email || "المهندس";
+    await addActivity(
+      `تم إسناد البلاغ #${id.substring(0, 5)} إلى المهندس ${engineerName}`,
+      "assign",
+      {
+        reportId: id,
+        targetUserId: user.uid,
+      }
+    );
     showToast("تم إسناد البلاغ لك بنجاح", "assign");
   } catch (err) {
     showToast("فشل في إسناد البلاغ, الرجاء المحاولة مجدداً", "error");
@@ -468,6 +478,240 @@ function initDataListeners() {
     }
   });
 }
+function initNotifications() {
+  const notificationBtn = document.getElementById("notificationBtn");
+  const notificationPanel = document.getElementById("notificationPanel");
+  const notificationList = document.getElementById("notificationList");
+  const notificationCount = document.getElementById("notificationCount");
+
+  if (!notificationBtn || !notificationPanel || !notificationList || !notificationCount) return;
+
+  const icons = {
+    complete: "fa-check",
+    success: "fa-check",
+    upload: "fa-cloud-arrow-up",
+    assign: "fa-user-plus",
+    revert: "fa-rotate-left",
+    delete: "fa-trash",
+    error: "fa-triangle-exclamation",
+    update: "fa-pen-to-square",
+    general: "fa-bell",
+  };
+  const allowedTypes = new Set(Object.keys(icons));
+  const readNotificationStoragePrefix = "assasEngineerReadNotificationIds";
+  const notificationLifetimeMs = 7 * 24 * 60 * 60 * 1000;
+  let currentNotificationIds = [];
+  let currentUserId = null;
+  let assignedReportIds = new Set();
+  let assignedReportShortIds = new Set();
+  let activityDocs = [];
+  let reportDocs = [];
+
+  const getReadNotificationStorageKey = () =>
+    `${readNotificationStoragePrefix}:${currentUserId || "guest"}`;
+
+  const getReadNotificationIds = () => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(getReadNotificationStorageKey())) || []);
+    }
+    catch (error) {
+      return new Set();
+    }
+  };
+
+  const saveReadNotificationIds = (ids) => {
+    localStorage.setItem(getReadNotificationStorageKey(), JSON.stringify([...ids]));
+  };
+
+  const getNotificationDate = (timestamp) => {
+    if (!timestamp) return null;
+    if (typeof timestamp.toDate === "function") return timestamp.toDate();
+    const date = new Date(timestamp);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
+  const isExpiredNotification = (data) => {
+    const createdAt = getNotificationDate(data.createdAt);
+    return createdAt && Date.now() - createdAt.getTime() > notificationLifetimeMs;
+  };
+
+  const removeExpiredNotification = (id) => {
+    deleteDoc(doc(db, "activity_logs", id)).catch((error) => {
+      console.error("Notification cleanup error:", error);
+    });
+  };
+
+  const updateNotificationBadge = () => {
+    const readIds = getReadNotificationIds();
+    const unreadCount = currentNotificationIds.filter((id) => !readIds.has(id)).length;
+
+    notificationCount.textContent = unreadCount;
+    notificationCount.classList.toggle("hidden", unreadCount === 0);
+    notificationBtn.classList.toggle("has-unread", unreadCount > 0);
+  };
+
+  const markNotificationsAsRead = () => {
+    const readIds = getReadNotificationIds();
+
+    currentNotificationIds.forEach((id) => readIds.add(id));
+    saveReadNotificationIds(readIds);
+    updateNotificationBadge();
+  };
+
+  const getShortReportId = (data) => {
+    if (data.reportId) return String(data.reportId).substring(0, 5);
+    const match = String(data.message || "").match(/#([A-Za-z0-9]{5,})/);
+    return match ? match[1].substring(0, 5) : "";
+  };
+
+  const isEngineerNotification = (data) => {
+    const shortReportId = getShortReportId(data);
+
+    return (
+      data.targetUserId === currentUserId ||
+      assignedReportIds.has(data.reportId) ||
+      assignedReportShortIds.has(shortReportId)
+    );
+  };
+
+  const getEngineerMessage = (data) => {
+    const reportId = getShortReportId(data);
+    const displayId = reportId ? `#${reportId}` : "";
+
+    switch (data.type) {
+      case "assign":
+        return `تم إسناد البلاغ ${displayId} إليك`;
+      case "update":
+        return `تم تحديث البلاغ ${displayId} الذي تعمل عليه`;
+      case "complete":
+        return `تم إكمال البلاغ ${displayId} الذي تعمل عليه`;
+      case "revert":
+        return `تم إرجاع البلاغ ${displayId} إلى غير مكتمل`;
+      case "delete":
+        return `تم حذف البلاغ ${displayId}`;
+      default:
+        return data.message || "";
+    }
+  };
+
+  const refreshAssignedReports = () => {
+    const currentAssignedReportIds = new Set();
+    const currentAssignedShortIds = new Set();
+
+    reportDocs.forEach((docSnap) => {
+      const report = docSnap.data();
+
+      if (report.assigned_to === currentUserId) {
+        currentAssignedReportIds.add(docSnap.id);
+        currentAssignedShortIds.add(docSnap.id.substring(0, 5));
+      }
+    });
+
+    assignedReportIds = currentAssignedReportIds;
+    assignedReportShortIds = currentAssignedShortIds;
+  };
+
+  const renderNotifications = () => {
+    if (!currentUserId) return;
+
+    const freshDocs = [];
+
+    activityDocs.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      if (isExpiredNotification(data)) {
+        removeExpiredNotification(docSnap.id);
+        return;
+      }
+
+      if (isEngineerNotification(data)) {
+        freshDocs.push(docSnap);
+      }
+    });
+
+    currentNotificationIds = freshDocs.map((docSnap) => docSnap.id);
+
+    const readIds = getReadNotificationIds();
+    const freshIdSet = new Set(currentNotificationIds);
+
+    [...readIds].forEach((id) => {
+      if (!freshIdSet.has(id)) readIds.delete(id);
+    });
+    saveReadNotificationIds(readIds);
+
+    notificationList.innerHTML = "";
+    updateNotificationBadge();
+
+    if (freshDocs.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "notification-empty";
+      empty.textContent = "لا توجد إشعارات خاصة ببلاغاتك حالياً";
+      notificationList.appendChild(empty);
+      return;
+    }
+
+    freshDocs.forEach((docSnap) => {
+      const data = docSnap.data();
+      const type = allowedTypes.has(data.type) ? data.type : "general";
+      const isUnread = !readIds.has(docSnap.id);
+      const item = document.createElement("div");
+      item.className = `notification-item ${type}${isUnread ? " unread" : ""}`;
+
+      const icon = document.createElement("div");
+      icon.className = "notification-icon";
+      icon.innerHTML = `<i class="fa-solid ${icons[type]}"></i>`;
+
+      const content = document.createElement("div");
+      const title = document.createElement("div");
+      title.className = "notification-title";
+      title.textContent = getEngineerMessage(data);
+
+      const time = document.createElement("div");
+      time.className = "notification-time";
+      time.textContent = formatNotificationTime(data.createdAt);
+
+      content.appendChild(title);
+      content.appendChild(time);
+      item.appendChild(icon);
+      item.appendChild(content);
+      notificationList.appendChild(item);
+    });
+  };
+
+  notificationBtn.addEventListener("click", () => {
+    notificationPanel.classList.toggle("hidden");
+
+    if (!notificationPanel.classList.contains("hidden")) {
+      markNotificationsAsRead();
+    }
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    currentUserId = user?.uid || null;
+    refreshAssignedReports();
+    renderNotifications();
+  });
+
+  onSnapshot(collection(db, "reports"), (snapshot) => {
+    reportDocs = snapshot.docs;
+    refreshAssignedReports();
+    renderNotifications();
+  });
+
+  const activityQuery = query(
+    collection(db, "activity_logs"),
+    orderBy("createdAt", "desc")
+  );
+
+  onSnapshot(activityQuery, (snapshot) => {
+    activityDocs = snapshot.docs;
+    renderNotifications();
+  });
+}
+function formatNotificationTime(timestamp) {
+  if (!timestamp) return "";
+  return timestamp.toDate().toLocaleString("ar-SA");
+}
 function initCharts() {
   completedChart = createChart("completedChart", "#2ecc71");
   inProgressChart = createChart("inProgressChart", "#f39c12");
@@ -478,5 +722,6 @@ function initApp() {
   initCharts();
   bindEvents();
   initDataListeners();
+  initNotifications();
 }
 initApp();

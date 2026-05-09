@@ -1,7 +1,8 @@
 /* =================================================== IMPORTS =================================================== */
-import { db, storage } from "./firebase.js";
+import { db, storage, auth } from "./firebase.js";
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+import { addActivity } from "./utils.js";
 
 /* =================================================== CONSTANTS =================================================== */
 const reportIdEl = document.getElementById("reportId");
@@ -19,6 +20,7 @@ const step3 = document.getElementById("step3");
 /* =================================================== STATE/VARIABLES =================================================== */
 const params = new URLSearchParams(window.location.search);
 const reportId = params.get("id");
+let loadedReport = null;
 
 /* =================================================== HELPERS/UTILS =================================================== */
 const showToast = (message, action = "complete") => {
@@ -93,6 +95,49 @@ function lockForm() {
   document.querySelectorAll('input[name="status"]').forEach((radio) => (radio.disabled = true));
 }
 
+async function getUserName(userId) {
+  if (!userId) return "المهندس";
+
+  try {
+    const userSnap = await getDoc(doc(db, "users", userId));
+
+    if (userSnap.exists()) {
+      const user = userSnap.data();
+      return user.name || user.displayName || user.email || "المهندس";
+    }
+  }
+  catch (error) {
+    console.error("User name lookup error:", error);
+  }
+
+  return auth.currentUser?.displayName || auth.currentUser?.email || "المهندس";
+}
+
+function getStatusActivity(status, displayId, engineerName) {
+  switch (status) {
+    case "in_progress":
+      return {
+        message: `تم إسناد البلاغ #${displayId} إلى المهندس ${engineerName}`,
+        type: "assign",
+      };
+    case "completed":
+      return {
+        message: `تم إكمال البلاغ #${displayId} بواسطة المهندس ${engineerName}`,
+        type: "complete",
+      };
+    case "pending":
+      return {
+        message: `تم إرجاع البلاغ #${displayId} إلى غير مكتمل بواسطة المهندس ${engineerName}`,
+        type: "revert",
+      };
+    default:
+      return {
+        message: `تم تحديث البلاغ #${displayId} بواسطة المهندس ${engineerName}`,
+        type: "update",
+      };
+  }
+}
+
 /* =================================================== MAIN LOGIC =================================================== */
 async function loadReport() {
   if (!reportId) {
@@ -109,6 +154,7 @@ async function loadReport() {
       return;
     }
     const report = snap.data();
+    loadedReport = report;
     const displayId = reportId.substring(0, 5);
     reportIdEl.textContent = `#${displayId}`;
     notesEl.value = report.notes || "";
@@ -155,6 +201,12 @@ updateBtn.addEventListener("click", async () => {
   updateBtn.textContent = "جاري التحديث...";
   try {
     const docRef = doc(db, "reports", reportId);
+    const currentReportSnap = await getDoc(docRef);
+    const currentReport = currentReportSnap.exists() ? currentReportSnap.data() : loadedReport;
+    const engineerId = currentReport?.assigned_to || auth.currentUser?.uid || null;
+    const engineerName = await getUserName(engineerId);
+    const displayId = reportId.substring(0, 5);
+    const activity = getStatusActivity(selectedStatus, displayId, engineerName);
     const updateData = {
       status: selectedStatus,
       notes,
@@ -171,6 +223,14 @@ updateBtn.addEventListener("click", async () => {
       updateData.assigned_at = null;
     }
     await updateDoc(docRef, updateData);
+    await addActivity(
+      activity.message,
+      activity.type,
+      {
+        reportId,
+        targetUserId: engineerId,
+      }
+    );
     updateStatusUI(selectedStatus);
     if (selectedStatus !== "in_progress") {
       lockForm();

@@ -1,5 +1,5 @@
 /* =================================================== IMPORTS =================================================== */
-import { db } from "./firebase.js";
+import { db, auth } from "./firebase.js";
 import {
   collection,
   onSnapshot,
@@ -8,6 +8,7 @@ import {
   updateDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { addActivity, showToast } from "./utils.js";
 
 /* =================================================== CONSTANTS =================================================== */
 const statusTranslation = {
@@ -48,7 +49,10 @@ const prevPageBtn = document.getElementById("prevPageBtn");
 const nextPageBtn = document.getElementById("nextPageBtn");
 const pageInfo = document.getElementById("pageInfo");
 const reportDetailsCard = document.getElementById("reportDetailsCard");
+const btnAll = document.getElementById("btnAll");
+const btnMine = document.getElementById("btnMine");
 
+let currentView = "all";
 let usersMap = {};
 let allReports = [];
 let filteredReports = [];
@@ -64,26 +68,21 @@ const formatDate = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-const showToast = (message, action = "complete") => {
-  const container = document.getElementById("toastContainer");
-  const icons = {
-    complete: "fa-check",
-    assign: "fa-user-plus",
-    revert: "fa-rotate-left",
-    delete: "fa-xmark"
-  };
-  const toast = document.createElement("div");
-  toast.className = `toast ${action}`;
-  toast.innerHTML = `
-    <i class="fa-solid ${icons[action]}"></i>
-    <span>${message}</span>
-  `;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.transform = "translateX(-10px)";
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+const getCurrentUserId = () => {
+  try {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    return (
+      storedUser?.uid ||
+      storedUser?.firebase_uid ||
+      storedUser?.user_id ||
+      storedUser?.id ||
+      auth.currentUser?.uid ||
+      null
+    );
+  }
+  catch (error) {
+    return auth.currentUser?.uid || null;
+  }
 };
 
 const showConfirmModal = (title, text) => {
@@ -117,6 +116,7 @@ const applyFiltersAndSearch = () => {
   const locationVal = filterLocation.value;
   const statusVal = filterStatus.value;
   const damageTypeVal = filterDamageType.value;
+  const currentUserId = getCurrentUserId();
   const dateFromVal = filterDateFrom.value ? new Date(filterDateFrom.value) : null;
   
   if (dateFromVal) dateFromVal.setHours(0, 0, 0, 0);
@@ -126,6 +126,8 @@ const applyFiltersAndSearch = () => {
 
   filteredReports = allReports.filter((report) => {
     let match = true;
+    if (currentView === "mine" && report.created_by !== currentUserId) match = false;
+
     if (searchVal) {
       const street = report.street_name ? report.street_name.toLowerCase() : "";
       if (!report.id.includes(searchVal) && !street.includes(searchVal)) match = false;
@@ -268,6 +270,11 @@ const deleteReport = async (id) => {
   if (!confirmed) return;
   try {
     await deleteDoc(doc(db, "reports", id));
+     await addActivity(
+      `تم حذف البلاغ #${id.substring(0,5)}`,
+      "delete",
+      { reportId: id }
+    );
     showToast("تم حذف البلاغ", "delete");
     if (reportDetailsCard.innerHTML.includes(id.substring(0, 5))) {
       reportDetailsCard.classList.add("hidden");
@@ -279,10 +286,22 @@ const deleteReport = async (id) => {
 
 const completeReport = async (id) => {
   try {
+    const report = allReports.find((item) => item.id === id);
+    const engineerId = report?.assigned_to || null;
+    const engineerName = usersMap[engineerId]?.name || "المهندس";
+
     await updateDoc(doc(db, "reports", id), {
       status: "completed",
       completion_date: serverTimestamp()
     });
+     await addActivity(
+      `تم إكمال البلاغ #${id.substring(0,5)} بواسطة المهندس ${engineerName}`,
+      "complete",
+      {
+        reportId: id,
+        targetUserId: engineerId,
+      }
+    );
     showToast("تم تغير حالة البلاغ إلى 'مكتمل'", "complete");
   } catch (err) {
     showToast("فشل في عملية إكمال البلاغ", "error");
@@ -290,6 +309,20 @@ const completeReport = async (id) => {
 };
 
 /* =================================================== EVENT LISTENERS =================================================== */
+btnAll?.addEventListener("click", () => {
+  currentView = "all";
+  btnAll.classList.add("active");
+  btnMine?.classList.remove("active");
+  applyFiltersAndSearch();
+});
+
+btnMine?.addEventListener("click", () => {
+  currentView = "mine";
+  btnMine.classList.add("active");
+  btnAll?.classList.remove("active");
+  applyFiltersAndSearch();
+});
+
 [
   searchInput,
   filterSeverity,
@@ -298,7 +331,10 @@ const completeReport = async (id) => {
   filterDamageType,
   filterDateFrom,
   filterDateTo,
-].forEach((el) => el.addEventListener("input", applyFiltersAndSearch));
+].forEach((el) => {
+  el.addEventListener("input", applyFiltersAndSearch);
+  el.addEventListener("change", applyFiltersAndSearch);
+});
 
 prevPageBtn.addEventListener("click", () => {
   if (currentPage > 1) {
@@ -323,6 +359,9 @@ resetFiltersBtn.addEventListener("click", () => {
   filterDateFrom.value = "";
   filterDateTo.value = "";
   searchInput.value = "";
+  currentView = "all";
+  btnAll?.classList.add("active");
+  btnMine?.classList.remove("active");
   applyFiltersAndSearch();
 });
 
@@ -343,6 +382,10 @@ tableBody.addEventListener("click", async (e) => {
   }
 
   if (e.target.closest(".revert-btn")) {
+    const report = allReports.find((item) => item.id === reportId);
+    const engineerId = report?.assigned_to || null;
+    const engineerName = usersMap[engineerId]?.name || "المهندس";
+
     try {
       await updateDoc(doc(db, "reports", reportId), {
         status: "pending",
@@ -352,6 +395,14 @@ tableBody.addEventListener("click", async (e) => {
         completed_at: null,
         completion_image: null
       });
+      await addActivity(
+  `تم إرجاع البلاغ #${reportId.substring(0,5)} إلى غير مكتمل بواسطة المهندس ${engineerName}`,
+  "revert",
+  {
+    reportId,
+    targetUserId: engineerId,
+  }
+);
       showToast("تم تغيير حالة البلاغ إلى 'غير مكتمل'", "revert");
     } catch (err) {
       showToast("فشل في عملية تغيير حالة البلاغ", "error");
@@ -368,6 +419,14 @@ tableBody.addEventListener("click", async (e) => {
         assigned_at: serverTimestamp(),
         status: "in_progress"
       });
+      await addActivity(
+        `تم إسناد البلاغ #${el.dataset.report.substring(0, 5)} إلى ${engineerName}`,
+        "assign",
+        {
+          reportId: el.dataset.report,
+          targetUserId: el.dataset.user,
+        }
+      );
       showToast(`تم إسناد البلاغ للمهندس ${engineerName}`, "assign");
       el.closest(".assign-menu").classList.add("hidden");
     } catch (err) {
