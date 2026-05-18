@@ -28,7 +28,7 @@ body {
   box-sizing: border-box;
 }
 aside,
-aside * {
+aside *:not(i) {
   font-family: "Cairo", sans-serif !important;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;

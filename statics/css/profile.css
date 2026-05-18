@@ -356,10 +356,12 @@ input:checked + .slider::before {
 }
 
 /* Responsive */
-@media (max-width: 900px) {
+@media (max-width: 600px) {
   aside {
     display: none;
   }
+}
+@media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;
   }
